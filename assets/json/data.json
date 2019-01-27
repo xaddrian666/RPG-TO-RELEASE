@@ -1,0 +1,92 @@
+{
+  "characters": [
+    {
+      "src": "sprites/chara4.png",
+      "sx": 30,
+      "sy": 7,
+      "width": 17,
+      "height": 29,
+      "animations": {
+        "left": [{"sx": 4, "sy":43}, {"sx": 56, "sy":43}, {"sx": 30, "sy":43}],
+        "right": [{"sx": 4, "sy":79}, {"sx": 56, "sy":79}, {"sx": 30, "sy":79}],
+        "up": [{"sx": 4, "sy":115}, {"sx": 56, "sy":115}, {"sx": 30, "sy":115}],
+        "down": [{"sx": 4, "sy":7}, {"sx": 56, "sy":7}, {"sx": 30, "sy":7}],
+        "idle": [{"sx": 30, "sy":7}]
+      }
+    },
+    {
+      "src": "sprites/chara4.png",
+      "sx": 106,
+      "sy": 6,
+      "width": 21,
+      "height": 30,
+      "animations": {
+        "left": [{"sx": 80, "sy":42}, {"sx": 132, "sy":42}, {"sx": 106, "sy":42}],
+        "right": [{"sx": 80, "sy":78}, {"sx": 132, "sy":78}, {"sx": 106, "sy":78}],
+        "up": [{"sx": 80, "sy":114}, {"sx": 132, "sy":114}, {"sx": 106, "sy":114}],
+        "down": [{"sx": 80, "sy":6}, {"sx": 132, "sy":6}, {"sx": 106, "sy":6}],
+        "idle": [{"sx": 106, "sy":6}]
+      }
+    },
+    {
+      "src": "sprites/chara4.png",
+      "sx": 186,
+      "sy": 8,
+      "width": 17,
+      "height": 28,
+      "animations": {
+        "left": [{"sx": 161, "sy":44}, {"sx": 213, "sy":44}, {"sx": 186, "sy":44}],
+        "right": [{"sx": 161, "sy":80}, {"sx": 213, "sy":80}, {"sx": 186, "sy":80}],
+        "up": [{"sx": 161, "sy":116}, {"sx": 213, "sy":116}, {"sx": 186, "sy":116}],
+        "down": [{"sx": 161, "sy":8}, {"sx": 213, "sy":8}, {"sx": 186, "sy":8}],
+        "idle": [{"sx": 186, "sy":8}]
+      }
+    }
+  ],
+  "menuImages": [
+    {
+      "name": "background",
+      "src": "sprites/bg_menu.png"
+    },
+    {
+      "name": "buttons",
+      "src": "sprites/_buttons_sheet.png"
+    },
+    {
+      "name": "windows",
+      "src": "sprites/_sheet_window_28.png"
+    },
+    {
+      "name": "windows2",
+      "src": "sprites/_sheet_window_29.png"
+    },
+    {
+      "name": "background",
+      "src": "sprites/bg_menu.png"
+    },
+    {
+      "name": "bars",
+      "src": "sprites/_bar_sheet.png"
+    },
+    {
+      "name": "arrows",
+      "src": "sprites/_sheet_arrows.png"
+    }
+  ],
+  "entities": {
+    "cow": {
+      "src": "sprites/animals3.png",
+      "sx": 51,
+      "sy": 8,
+      "width": 19,
+      "height": 28
+    },
+    "pig": {
+      "src": "sprites/animals3.png",
+      "sx": 52,
+      "sy": 158,
+      "width": 21,
+      "height": 22
+    }
+  }
+}
