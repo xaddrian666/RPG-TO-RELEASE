@@ -18,6 +18,10 @@ canvas {
   height: 480px;
 }
 
+#canvas-box canvas {
+  position: absolute;
+}
+
 #game-chat {
   width: 300px;
   height: 200px;

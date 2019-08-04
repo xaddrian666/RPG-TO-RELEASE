@@ -1,17 +1,17 @@
 function Game() {
 
-  this.map = undefined;
-  this.tilesets = {};
-  this.textures = [];
+  // this.gamename = "ADRN";
+
+  this.socket = io();
+  this.players = [];
+  this.interactions = [];
   this.tilesize = 16;
   this.activeCamera = {x:0, y:0};
-  this.tiles = [];
   this.blocks = {
     grass: {walk_sounds: [{name: "footstep_grass_01"}, {name: "footstep_grass_02"}]},
     concrete: {walk_sounds: [{name: "footstep_concrete_01"}, {name: "footstep_concrete_02"}]},
     wooden: {walk_sounds: [{name: "footstep_wood_01"}, {name: "footstep_wood_02"}]},
     dirt: {walk_sounds: [{name: "footstep_dirt_01"}, {name: "footstep_dirt_02"}]}
-    // 2937: {animation: [{tileid: 2937}, {tileid: 2940}, {tileid: 2943}]}
   };
 
   this.properties = {
@@ -61,8 +61,9 @@ function Game() {
     document.addEventListener("mousemove", function(e) {
       that.mouse.x = e.clientX - $("#game").offset().left;
       that.mouse.y = e.clientY - $("#game").offset().top;
+      that.mouse.clickEvent = undefined;
 
-      that.mouse.check.buttons(that);
+      // that.mouse.check.buttons(that);
     });
 
     $("canvas").click(function() {
@@ -115,8 +116,7 @@ function Game() {
     return lines;
   }
 
-  this.IsIntersecting = function(a, b, c, d)
-  {
+  this.IsIntersecting = function(a, b, c, d) {
       var denominator = ((b.X - a.X) * (d.Y - c.Y)) - ((b.Y - a.Y) * (d.X - c.X));
       var numerator1 = ((a.Y - c.Y) * (d.X - c.X)) - ((a.X - c.X) * (d.Y - c.Y));
       var numerator2 = ((a.Y - c.Y) * (b.X - a.X)) - ((a.X - c.X) * (b.Y - a.Y));
@@ -157,11 +157,10 @@ function Game() {
   this.images = {};
   this.sounds = {};
 
-  this.loadImages = function() {
+  this.loadImages = function(sources) {
     return new Promise(resolve => {
       console.log("Loading images");
       that = this;
-      sources = this.menuImages;
       $.each(sources, function(index, value) {
         let img = new Image();
         img.src = value.src;
@@ -175,22 +174,11 @@ function Game() {
     });
   }
 
-  this.loadSounds = function() {
+  this.loadSounds = function(sources) {
     return new Promise(resolve => {
       console.log("Loading sounds");
       that = this;
-      sources = [
-        {title: "button1", src: "./sounds/Button7.mp3"},
-        {title: "button2", src: "./sounds/Button 3.mp3"},
-        {title: "footstep_grass_01", src: "./sounds/footstep_grass_run_08.wav"},
-        {title: "footstep_grass_02", src: "./sounds/footstep_grass_run_09.wav"},
-        {title: "footstep_concrete_01", src: "./sounds/footstep_concrete_run_01.wav"},
-        {title: "footstep_concrete_02", src: "./sounds/footstep_concrete_run_02.wav"},
-        {title: "footstep_wood_01", src: "./sounds/footstep_wood_run_01.wav"},
-        {title: "footstep_wood_02", src: "./sounds/footstep_wood_run_02.wav"},
-        {title: "footstep_dirt_01", src: "./sounds/footstep_dirt_walk_run_01.wav"},
-        {title: "footstep_dirt_02", src: "./sounds/footstep_dirt_walk_run_02.wav"}
-      ];
+      sources = this.data.sounds;
       $.each(sources, function(index, value) {
         let audio = new Audio(value.src);
         audio.autoplay = false;
@@ -219,93 +207,179 @@ function Game() {
     });
   }
 
+  this.loadPlayerData = function() {
+    return new Promise(resolve => {
+      game.socket.emit('get userdata from db', game.gamename);
+      game.socket.on('retrieve userdata', function(res) {
+        console.log(res);
+        game.player.characters = [];
+        $.each(res, function(i, v) {
+          game.player.characters.push({name: v.character_name, id: v.slot_id, sprite: v.sprite_id, x:v.pos_x, y:v.pos_y, location:v.location});
+        });
+        // char_id = prompt();
+        char_id = 1;
+        $.each(game.data.characters[game.player.characters[char_id].sprite], function(i, v) {
+          game.player.character.sprite[i] = v;
+        });
+        game.player.location.name = game.player.characters[char_id].location;
+        game.player.character.name = game.player.characters[char_id].name;
+        game.player.position.x = game.player.characters[char_id].x;
+        game.player.position.y = game.player.characters[char_id].y;
+        game.player.canvas_position.x = game.player.characters[char_id].x;
+        game.player.canvas_position.y = game.player.characters[char_id].y;
+        resolve();
+      });
+    });
+  }
+
+  this.setupListeners = function() {
+    game.socket.on('get entities', function(data) {
+      game.player.location.entities.push(new game.Entity(data));
+      game.player.location.entities[data.id].init();
+    });
+  }
+
+  this.getPropertyValue = function(array, name) {
+    return array.filter(function(key) { return key.name == name; })[0].value;
+  }
+
   this.init = function() {
     that = this;
     return new Promise(resolve => {
       console.log("Loading started..");
+      that.setupListeners();
       resolve(this);
     })
     .then(this.loadData.bind(this))
-    .then(function(that) {
-      return that.loadImages(that.images, that.menuImages);
+    .then(function(that){
+      return that.loadImages(that.menuImages)
     })
     .then(this.loadSounds.bind(this))
     .then(this.loadFonts.bind(this))
     .then(function() {
       return new Promise(resolve => {
         console.log("Turning on some functions");
+        that.turnOnKeyboard();
+
         // that.activeScene = that.scenes.menu;
         that.mouseEvent();
         $.each(that.scenes, function(index, value) {
           value.canvas.width = that.properties.width;
           value.canvas.height = that.properties.height;
           value.getContext();
+          if(value.init) {
+            value.init();
+          }
         });
-
         resolve();
       });
     })
-    .then(this.loadGame.bind(this))
+    // .then(function(){
+    //   return new Promise(resolve => {
+    //     that.socket.emit('get userdata from db', that.gamename);
+    //     that.socket.on('retrieve userdata', function(res) {
+    //       console.log(res);
+    //       that.player.characters = [];
+    //       $.each(res, function(i, v) {
+    //         that.player.characters.push({name: v.character_name, id: v.slot_id, sprite: v.sprite_id, x:v.pos_x, y:v.pos_y});
+    //       });
+    //       resolve();
+    //     });
+    //   });
+    // })
+    .then(function(){
+      console.log("Loading game..");
+      // game.gamename = prompt();
+      game.gamename = "ADRN";
+      return Promise.resolve();
+    })
+    .then(this.loadPlayerData)
+    .then(function() {
+      return that.loadImages(that.data.gameImages)
+    })
+    .then(this.loadMap.bind(this))
+    .then(function(canvas) {
+      game.socket.on('get players', function(arr) {
+        $.each(arr, function(i, v) {
+          if(v.character.name != game.player.character.name) {
+            game.players.push(v);
+          }
+        });
+      });
+      game.player.screen = canvas;
+      game.activeCamera = game.player.camera;
+      game.activeScene = game.scenes.playing;
+    })
+    .then(function(){
+      that.turnOnChat();
+    })
     .then(this.update.bind(this));
     // this.update();
   }
 
-  this.locations = {
-    woodlands: {name: "Woodlands", src: "maps/woodlands.json"}
-  }
-
-  this.player = {
-    location: this.locations.woodlands,
+  Game.prototype.player = {
+    location: {},
     screen: undefined,
     camera: {
       x:0,
       y:0,
       setup: function() {
-        px = that.player.canvas_position.x;
-        py = that.player.canvas_position.y;
+        px = game.player.position.x - Math.abs(game.activeCamera.x);
+        py = game.player.position.y - Math.abs(game.activeCamera.y);
+
         this.x = -(px - that.canvas.width / 2);
+        if(this.x > 0) {
+          this.x = 0;
+        } else if(Math.abs(this.x) - that.tilesize*2 > (that.player.location.data.width)*(that.tilesize)) {
+          this.x = -((that.player.location.data.width*(that.tilesize*2))-that.canvas.width);
+        }
         this.y = -(py - that.canvas.height / 2);
+        if(this.y > 0) {
+          this.y = 0;
+        } else if(Math.abs(this.y) - that.tilesize*2 > (that.player.location.data.height*(that.tilesize*2))-that.canvas.height) {
+          this.y = -((that.player.location.data.height*(that.tilesize*2))-that.canvas.height);
+        }
       },
       move: function(dir) {
-        if(that.player.canvas_position.x + that.player.fov >= that.canvas.width && dir == "right" && that.activeCamera.x > -that.map.width * (that.tilesize*2) + that.canvas.width + that.player.speed) {
+        if(that.player.canvas_position.x + that.player.fov >= that.canvas.width && dir == "right" && that.activeCamera.x > -that.player.location.data.width * (that.tilesize*2) + that.canvas.width + that.player.speed) {
           that.player.camera.x -= that.player.speed;
-          $.each(that.tiles, function(index, value){
-            that.tiles[index].x -= that.player.speed;
+          $.each(that.player.location.tiles, function(index, value){
+            that.player.location.tiles[index].x -= that.player.speed;
           });
           return true;
         }
         if(that.player.canvas_position.x - that.player.fov <= 0 && dir == "left" && that.activeCamera.x < 0 - that.player.speed) {
           that.player.camera.x -= -that.player.speed;
-          $.each(that.tiles, function(index, value){
-            that.tiles[index].x -= -that.player.speed;
+          $.each(that.player.location.tiles, function(index, value){
+            that.player.location.tiles[index].x -= -that.player.speed;
           });
           return true;
         }
-        if(that.player.canvas_position.y + that.player.fov >= that.canvas.height && dir == "down" && that.activeCamera.y > -that.map.height * (that.tilesize*2) + that.canvas.height + that.player.speed) {
+        if(that.player.canvas_position.y + that.player.fov >= that.canvas.height && dir == "down" && that.activeCamera.y > -that.player.location.data.height * (that.tilesize*2) + that.canvas.height + that.player.speed) {
           that.player.camera.y -= that.player.speed;
-          $.each(that.tiles, function(index, value){
-            that.tiles[index].y -= that.player.speed;
+          $.each(that.player.location.tiles, function(index, value){
+            that.player.location.tiles[index].y -= that.player.speed;
           });
           return true;
         }
         if(that.player.canvas_position.y - that.player.fov <= 0 && dir == "up" && that.activeCamera.y < 0 - that.player.speed) {
           that.player.camera.y -= -that.player.speed;
-          $.each(that.tiles, function(index, value){
-            that.tiles[index].y -= -that.player.speed;
+          $.each(that.player.location.tiles, function(index, value){
+            that.player.location.tiles[index].y -= -that.player.speed;
           });
           return true;
         }
         return false;
       }
     },
-    canvas_position: {x:708, y:790},
-    position: {x:708, y:790, current_tile: undefined},
+    canvas_position: {x:null, y:null},
+    position: {x:null, y:null, current_tile: undefined},
     size: {width: 20, height: 12},
     speed: 2.3,
     state: "idle",
+    follower: undefined,
     fov: 200,
     character: {
-      name: "test_Player",
       sprite: {
         image: undefined,
         load: function() {
@@ -319,28 +393,39 @@ function Game() {
             }
           });
         }
+      },
+      stats: {
+        max_hp: 120,
+        curr_hp: 60
       }
     },
     footsteps: function() {
       that.player.getCurrentTile();
-      if(this.position.current_tile.block != undefined) {
-        if(this.position.current_tile.block.block_type == "floor") {
-          rn = Math.floor(Math.random() * that.blocks[this.position.current_tile.block.floor_type].walk_sounds.length);
-          n = 0;
-          if(this.moving.left.state == true) {
-            n++;
-          }
-          if(this.moving.right.state == true) {
-            n++;
-          }
-          if(this.moving.up.state == true) {
-            n++;
-          }
-          if(this.moving.down.state == true) {
-            n++;
-          }
+      n = 0;
+      if(this.moving.left.state == true) n++;
+      if(this.moving.right.state == true) n++;
+      if(this.moving.up.state == true) n++;
+      if(this.moving.down.state == true) n++;
+      if(this.position.current_tile) {
+        let isThereAFloor = this.position.current_tile.filter(function(key) {
+          let isFloor = false;
+          $.each(key.block, function(i, v) {
+          	if(i == "block_type" && v == "floor") isFloor = true;
+          });
+          if(isFloor == true) return true;
+          else return false;
+        });
+        var theFloor;
+        if(isThereAFloor.length == 1) {
+          theFloor = isThereAFloor[0];
+        } else {
+          theFloor = isThereAFloor[isThereAFloor.length-1];
+        }
+        if(theFloor) {
+          rn = Math.floor(Math.random() * that.blocks[theFloor.block.floor_type].walk_sounds.length);
+
           if(this.step_phase % (20 * n) == 0) {
-            that.playSound(that.blocks[this.position.current_tile.block.floor_type].walk_sounds[this.step].name, 0.1);
+            that.playSound(that.blocks[theFloor.block.floor_type].walk_sounds[this.step].name, 0.1);
           }
         }
       }
@@ -357,74 +442,58 @@ function Game() {
       newpos[coord] += value * (this.speed);
       newpos["c"+coord] += value * (this.speed);
 
+      let can_go = true;
       let the_tiles = [];
-      $.each(that.tiles, function(index, value) {
+      $.each(this.location.tiles, function(index, value) {
         if(that.isColliding(value.x, value.y, that.tilesize*2, that.tilesize*2, newpos.cx, newpos.cy, that.player.size.width, that.player.size.height) == true) {
           the_tiles.push(value);
         }
       });
-      solid = true;
-      collide = false;
-      the_tile = the_tiles[the_tiles.length-1];
 
-      ite = 1;
-      while(the_tile.ontop) {
-        the_tile = the_tiles[the_tiles.length-ite];
-        ite++;
-      }
-
-      // if(the_tile.ontop) {
-      //   if(the_tile.ontop == true) {
-      //     the_tile = the_tiles[the_tiles.length-2];
-      //   }
-      //   // if(the_tiles[the_tiles.length-1].block) {
-      //   //   if(the_tiles[the_tiles.length-1].block.polygon_collision) {
-      //   //     the_tile = the_tiles[the_tiles.length-1];
-      //   //   }
-      //   // }
-      // }
-
-      if(the_tile.block) {
-        if(the_tile.block.polygon_collision) {
-          block_lines = the_tile.block.polygon_collision;
-          player_lines = that.rectToLines({x:newpos.x, y:newpos.y, width:that.player.size.width, height:that.player.size.height});
-          $.each(player_lines, function(index, value) {
-            for(var i=0;i<block_lines.length;i++) {
-              if(i==block_lines.length-1) {
-                second = 0;
-              } else {
-                second = i+1;
+      $.each(the_tiles, function(i, v) {
+        if(can_go == true || can_go == false) {
+          if(v.block) {
+            if(v.block.collision) {
+              console.log(v);
+              if(v.block.collision.type == "polygon") {
+                      block_lines = v.block.collision.lines;
+                      player_lines = that.rectToLines({x:newpos.x, y:newpos.y, width:that.player.size.width, height:that.player.size.height});
+                      $.each(player_lines, function(index, value) {
+                        for(var i=0;i<block_lines.length;i++) {
+                          if(i==block_lines.length-1) {
+                            second = 0;
+                          } else {
+                            second = i+1;
+                          }
+                          check = that.IsIntersecting({X: value.p1.x, Y:value.p1.y}, {X: value.p2.x, Y:value.p2.y}, {X: (block_lines[i].x * 2)+(v.x - that.activeCamera.x), Y:(block_lines[i].y * 2)+(v.y - that.activeCamera.y)}, {X: (block_lines[second].x * 2)+(v.x - that.activeCamera.x), Y:(block_lines[second].y * 2)+(v.y - that.activeCamera.y)});
+                          if(check.seg1 == true && check.seg2 == true) {
+                            can_go = false;
+                            break;
+                            return false;
+                          }
+                        }
+                      });
+                      if(can_go == false) {
+                        return true;
+                      }
+              } else if(v.block.collision.type == "rect") {
+                if(that.isColliding((v.block.collision.x*2) + v.x, (v.block.collision.y*2) + v.y, v.block.collision.width*2, v.block.collision.height*2, newpos.cx, newpos.cy, that.player.size.width, that.player.size.height) == true) {
+                  can_go = false;
+                  return true;
+                }
               }
-              check = that.IsIntersecting({X: value.p1.x, Y:value.p1.y}, {X: value.p2.x, Y:value.p2.y}, {X: (block_lines[i].x * 2)+(the_tile.x - that.activeCamera.x), Y:(block_lines[i].y * 2)+(the_tile.y - that.activeCamera.y)}, {X: (block_lines[second].x * 2)+(the_tile.x - that.activeCamera.x), Y:(block_lines[second].y * 2)+(the_tile.y - that.activeCamera.y)});
-              if(check.seg1 == true && check.seg2 == true) {
-                collide = true;
-                solid = false;
-                break;
-                return false;
-              }
-            }
-          });
-        }
-        else if(the_tile.block.solid == false) {
-          solid = false;
-        }
-      }
-
-      if(the_tile.walkable != undefined) {
-        if(the_tile.walkable == false) {
-          if(the_tile.block) {
-            if(the_tile.block.polygon_collision) {
-              solid = false;
-            } else {
-              solid = true;
+            } else if(v.block.solid == true) {
+                can_go = false;
+                return true;
             }
           }
-        } else {
-          solid = false;
+          if(v.walkable) {
+            can_go = true;
+          }
         }
-      }
+      });
 
-      if(solid == false && collide == false && newpos.x > 0 && newpos.y > 0 && newpos.x < (that.map.width * (that.tilesize * 2)) && newpos.y < (that.map.height * (that.tilesize * 2))) {
+      if(can_go == true && newpos.x > 0 && newpos.y > 0 && newpos.x < (that.player.location.data.width * (that.tilesize * 2)) && newpos.y < (that.player.location.data.height * (that.tilesize * 2))) {
         this.position[coord] += value * this.speed;
         return true;
       }
@@ -437,79 +506,33 @@ function Game() {
       up: {state:false, value: -1, coord: "y", direction: "vertical"},
       down: {state:false, value: 1, coord: "y", direction: "vertical"}
     },
+    utilities: {
+      keys: {
+        65: "left",
+        68: "right",
+        87: "up",
+        83: "down"
+      }
+    },
     step_phase: 0,
     step: 0,
     facing: [],
     movement: function() {
       $(document).bind("keydown", function(e) {
-        if(e.keyCode == 65) {
-          that.player.moving.left.state = true;
-          var index = that.player.facing.indexOf("left");
+        if(e.keyCode == 65 || e.keyCode == 68 || e.keyCode == 87 || e.keyCode == 83) {
+          that.player.moving[that.player.utilities.keys[e.keyCode]].state = true;
+          var index = that.player.facing.indexOf(that.player.utilities.keys[e.keyCode]);
           if(index == -1) {
-            that.player.facing.push("left");
+            that.player.facing.push(that.player.utilities.keys[e.keyCode]);
           }
-
-        }
-        if(e.keyCode == 68) {
-          that.player.moving.right.state = true;
-          // that.player.facing = "right";
-          var index = that.player.facing.indexOf("right");
-          if(index == -1) {
-            that.player.facing.push("right")
-          }
-        }
-        if(e.keyCode == 87) {
-          that.player.moving.up.state = true;
-          // that.player.facing = "up";
-          var index = that.player.facing.indexOf("up");
-          if(index == -1) {
-            that.player.facing.push("up")
-          }
-
-        }
-        if(e.keyCode == 83) {
-          that.player.moving.down.state = true;
-          // that.player.facing = "down";
-          var index = that.player.facing.indexOf("down");
-          if(index == -1) {
-            that.player.facing.push("down")
-          }
-
         }
       });
       $(document).bind("keyup", function(e) {
-        if(e.keyCode == 65) {
-          that.player.moving.left.state = false;
-          that.player.character.sprite.sy = that.player.character.sprite.animations.left[2].sy;
-          that.player.character.sprite.sx = that.player.character.sprite.animations.left[2].sx;
-          var index = that.player.facing.indexOf("left");
-          if(index != -1) {
-            that.player.facing.splice(index, 1);
-          }
-        }
-        if(e.keyCode == 68) {
-          that.player.moving.right.state = false;
-          that.player.character.sprite.sy = that.player.character.sprite.animations.right[2].sy;
-          that.player.character.sprite.sx = that.player.character.sprite.animations.right[2].sx;
-          var index = that.player.facing.indexOf("right");
-          if(index != -1) {
-            that.player.facing.splice(index, 1);
-          }
-        }
-        if(e.keyCode == 87) {
-          that.player.moving.up.state = false;
-          that.player.character.sprite.sy = that.player.character.sprite.animations.up[2].sy;
-          that.player.character.sprite.sx = that.player.character.sprite.animations.up[2].sx;
-          var index = that.player.facing.indexOf("up");
-          if(index != -1) {
-            that.player.facing.splice(index, 1);
-          }
-        }
-        if(e.keyCode == 83) {
-          that.player.moving.down.state = false;
-          that.player.character.sprite.sy = that.player.character.sprite.animations.down[2].sy;
-          that.player.character.sprite.sx = that.player.character.sprite.animations.down[2].sx;
-          var index = that.player.facing.indexOf("down");
+        if(e.keyCode == 65 || e.keyCode == 68 || e.keyCode == 87 || e.keyCode == 83) {
+          that.player.moving[that.player.utilities.keys[e.keyCode]].state = false;
+          that.player.character.sprite.sy = that.player.character.sprite.animations[that.player.utilities.keys[e.keyCode]][2].sy;
+          that.player.character.sprite.sx = that.player.character.sprite.animations[that.player.utilities.keys[e.keyCode]][2].sx;
+          var index = that.player.facing.indexOf(that.player.utilities.keys[e.keyCode]);
           if(index != -1) {
             that.player.facing.splice(index, 1);
           }
@@ -519,70 +542,98 @@ function Game() {
     getCurrentTile: function() {
       tx = Math.floor((this.position.x + this.size.width/2) / (that.tilesize * 2));
       ty = Math.floor((this.position.y + this.size.height/2) / (that.tilesize * 2));
-      tile = (ty * that.map.width) + tx;
+      tile = (ty * game.player.location.data.width) + tx;
 
-      id = that.tiles.filter(function(key) {
+      id = that.player.location.tiles.filter(function(key) {
         return key.id == tile;
       });
-      $.each(id, function(index, value) {
-        // that.player.position.current_tile = value;
-        // that.player.position.current_tile = value;
-        if(value.block) {
-          if(value.block.block_type == "floor") {
-            that.player.position.current_tile = value;
-          }
-        }
-      });
+      this.position.current_tile = id;
     },
     init: function() {
-      //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      //>>>>>>>>>>>>>>>>>>>>>>TEST>>>>>>>>>>>>>>>>>>>>>>
-      //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      test = Math.floor(Math.random() * game.data.characters.length);
-      console.log(test);
-      $.each(game.data.characters[test], function(i, v) {
-        game.player.character.sprite[i] = v;
-      });
-      //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      //<<<<<<<<<<<<<<<<<<<<<<TEST<<<<<<<<<<<<<<<<<<<<<<
-      //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       this.getCurrentTile();
       this.camera.setup();
       this.movement();
-      game.socket = io();
-      game.socket.emit('player joined', "someone has joined the game");
-      game.socket.on('test', function(data) {
-        game.entities.push(new game.Entity(game.data.entities[data.name], data.x, data.y));
-      });
+      game.socket.emit('player joined', this);
+    },
+    draw: function() {
+        game.activeScene.context.imageSmoothingEnabled = false;
+        game.activeScene.context.drawImage(this.character.sprite.image, this.character.sprite.sx, this.character.sprite.sy, this.character.sprite.width, this.character.sprite.height, this.canvas_position.x - ((this.character.sprite.width*2) - this.size.width)/2, this.canvas_position.y - this.character.sprite.height*2 + this.size.height, 2*this.character.sprite.width, 2*this.character.sprite.height);
+        // game.activeScene.context.font = "13px Pixelbroidery";
+        // game.activeScene.context.textAlign = "center";
+        // measure = game.activeScene.context.measureText(this.character.name);
+        // game.activeScene.context.fillStyle = "white";
+        // game.activeScene.context.strokeStyle = "black";
+        // game.activeScene.context.lineWidth = 2;
+        // game.activeScene.context.strokeText(this.character.name, this.canvas_position.x+(this.character.sprite.width*2 - (measure.width/2))/2, this.canvas_position.y - this.character.sprite.height-20);
+        // game.activeScene.context.fillText(this.character.name, this.canvas_position.x+(this.character.sprite.width*2 - (measure.width/2))/2, this.canvas_position.y - this.character.sprite.height-20);
+
+        // context.beginPath();
+        // context.fillStyle = "black";
+        // context.rect(this.canvas_position.x, this.canvas_position.y, this.size.width, this.size.height);
+        // context.fill();
+        // if(this.position.current_tile) {
+        //   context.beginPath();
+        //   context.rect(this.position.current_tile.x, this.position.current_tile.y, 32, 32);
+        //   context.strokeStyle = "red";
+        //   context.stroke();
+        // }
     },
     update: function() {
+      let THIS = this;
       $.each(this.moving, function(index, result) {
         if(result.state == true) {
-          that.player.camera.move(index);
-          is_moving = that.player.move(result.value, result.coord);
-          id = that.player.facing.length-1;
+          THIS.camera.move(index);
+          is_moving = THIS.move(result.value, result.coord);
+          id = THIS.facing.length-1;
           if(is_moving) {
-            that.player.step_phase++;
-            that.player.character.sprite.sx = that.player.character.sprite.animations[that.player.facing[id]][that.player.step].sx;
-            that.player.character.sprite.sy = that.player.character.sprite.animations[that.player.facing[id]][that.player.step].sy;
-            that.player.footsteps();
+            if(THIS.follower != undefined) {
+              THIS.follower.setTarget(THIS.position.x, THIS.position.y);
+            }
+            that.socket.emit('update player info', "position", {name:THIS.character.name, value:THIS.position});
+            THIS.step_phase++;
+            THIS.character.sprite.sx = THIS.character.sprite.animations[THIS.facing[id]][THIS.step].sx;
+            THIS.character.sprite.sy = THIS.character.sprite.animations[THIS.facing[id]][THIS.step].sy;
+            THIS.footsteps();
           } else {
-            that.player.character.sprite.sx = that.player.character.sprite.animations[that.player.facing[id]][2].sx;
-            that.player.character.sprite.sy = that.player.character.sprite.animations[that.player.facing[id]][2].sy;
+            THIS.character.sprite.sx = THIS.character.sprite.animations[THIS.facing[id]][2].sx;
+            THIS.character.sprite.sy = THIS.character.sprite.animations[THIS.facing[id]][2].sy;
           }
         }
       });
-      this.canvas_position.x = that.player.position.x - Math.abs(game.activeCamera.x);
-      this.canvas_position.y = that.player.position.y - Math.abs(game.activeCamera.y);
+      this.canvas_position.x = this.position.x - Math.abs(game.activeCamera.x);
+      this.canvas_position.y = this.position.y - Math.abs(game.activeCamera.y);
     }
   }
 
+  this.keyboardKeys = {
+    INTERACTION: {
+      key: 69, //E
+      event: undefined
+    }
+  }
+
+  this.turnOnKeyboard = function() {
+
+    document.addEventListener("keydown", function(e) {
+      if(e.keyCode == that.keyboardKeys.INTERACTION.key) {
+        if(that.keyboardKeys.INTERACTION.event != undefined) {
+          that.keyboardKeys.INTERACTION.event();
+        }
+      }
+    });
+  }
+
+  this.animationFrame;
+
   this.update = function() {
-    // this.activeCamera.x = Math.round(this.activeCamera.x);
-    // this.activeCamera.y = Math.round(this.activeCamera.y);
-    requestAnimationFrame(this.update.bind(this));
+    this.animationFrame = requestAnimationFrame(this.update.bind(this));
     this.fpsCounter();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.player.update();
+
+    $.each(game.player.location.entities, function(i, v) {
+      v.update();
+    });
 
     scene = this.activeScene.draw(this);
     if(scene != undefined) {

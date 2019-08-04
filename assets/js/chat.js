@@ -66,7 +66,7 @@ Game.prototype.turnOnChat = function() {
   });
 
   $("#chat-input").submit(function() {
-    game.socket.emit('chat message', $(this).val());
+    game.socket.emit('chat message', game.player.character.name + ": " +$(this).val());
     $(this).val("")
   });
 

@@ -22,6 +22,9 @@ canvas {
 #canvas-box {
   position: relative;
   height: 480px;
+  canvas {
+    position: absolute;
+  }
 }
 
 #game-chat {
@@ -76,6 +79,26 @@ ul {
   max-height: 250px;
   overflow: scroll;
 }
+
+// @media only screen and (max-width: 600px) {
+//   #todo {
+//     display: none;
+//   }
+// }
+//
+// @media screen and (orientation:landscape) {
+//   #todo {
+//     display: none;
+//   }
+//    #canvas-box {
+//      width: 100%;
+//      height:100vh;
+//    }
+//    #game {
+//      width: 100%;
+//      height: 100vh;
+//    }
+// }
 
 // @font-face {
 //     font-family: 'Pixelbroidery';
