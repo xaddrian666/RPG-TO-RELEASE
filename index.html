@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>RPG Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="assets/css/style.css">
+  </head>
+  <body>
+    <ul id="todo">
+      <li>za szybki preload resolve</li>
+      <li>wysylaj tylko potrzebne info o graczu na server</li>
+      <li>niekompletny player w server.js</li>
+      <li>3 typy obiektow na tile - kolizja, step sound, ontop</li>
+      <li>wartosc width i height entities po stronie servera</li>
+      <li>socket rooms - global chat and locations rooms</li>
+      <li>display other players</li>
+      <li style="color:red">WSZYSTKIE DANE Z 'DATA' Z WIZUALIZACJĄ URUCHAMIANIA GRY</li>
+      <li>character selection menu</li>
+      <li>resource loader</li>
+      <li>resource loader przy uruchamianiu gry</li>
+      <li>better button positioning</li>
+      <li>new button design</li>
+      <li>better selected button sounds</li>
+      <li>nowe tło pixelowe w menu</li>
+      <li>eliminacja randomowych błędów przy wczytywaniu</li>
+      <li>focus na canvasie by wyeliminować błąd z dźwiękiem</li>
+      <!-- <li>właśniwości pojedynczego kafelka</li> -->
+      <li>tablica bloków</li>d
+      <li style="color:red;">zmiana that na this w player</li>
+      <li>błąd po pierwszym kliknięciu play, a czasami błędne wczytanie spritesów</li>
+      <!-- <li>dodawanie kafelka z kazdej warstwy do tiles pod tym samym id</li> -->
+      <li>facing X and Y</li>
+      <li>klikania - wywalic active w buttonach i dodac tablice objects w scenach</li>
+      <li>hud = if active scene == playing</li>
+      <!-- <li>renderowanie ontop do pozycji gracza, rysowanie gracza oraz rysowanie ontop od pozycji gracza</li> -->
+      <!-- <li>preload kazdą wartwe na osobnym canvasie</li> -->
+      <!-- <li>osobno każdą warstwe renderuj, if animated - draw 1 of the frame, if not - draw just the one layer</li> -->
+    </ul>
+    <div id="canvas-box">
+      <canvas id="game" width="768" height="480"></canvas>
+      <!-- <canvas id="test" width="768" height="480"></canvas> -->
+    </div>
+    <canvas id="test"></canvas>
+    <!-- <script src="http://localhost:35729/livereload.js" charset="utf-8"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.15/howler.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" charset="utf-8"></script>
+    <script src="assets/js/jquery-3.3.1.min.js" charset="utf-8"></script>
+    <!-- <script src="assets/js/pathfinder.js" charset="utf-8"></script> -->
+    <script src="assets/js/game.js" charset="utf-8"></script>
+    <script src="assets/js/entities.js" charset="utf-8"></script>
+    <script src="assets/js/chat.js" charset="utf-8"></script>
+    <script src="assets/js/player.js" charset="utf-8"></script>
+    <script src="assets/js/renderer.js" charset="utf-8"></script>
+    <script src="assets/js/initializer.js" charset="utf-8"></script>
+  </body>
+</html>
