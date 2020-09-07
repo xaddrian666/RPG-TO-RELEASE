@@ -229,35 +229,37 @@ class Player {
     }
 
     draw() {
-        // console.log(`Drawing ${this.name}`);
-        game.activeScene.context.beginPath();
-        game.activeScene.context.imageSmoothingEnabled = false;
-        // game.activeScene.context.arc(this.canvas_position.x + this.spriteData.width / 2, this.canvas_position.y, 50, Math.PI, 0);
-        // game.activeScene.context.fill();
-        game.activeScene.context.drawImage(this.sprite, this.spriteData.sx, this.spriteData.sy, this.spriteData.width, this.spriteData.height, this.canvas_position.x - ((this.spriteData.width * 2) - this.size.width) / 2, this.canvas_position.y - this.spriteData.height * 2 + this.size.height, 2 * this.spriteData.width, 2 * this.spriteData.height);
-        game.activeScene.context.closePath();
+        if(this.sprite) {
+            // console.log(`Drawing ${this.name}`);
+            game.activeScene.context.beginPath();
+            game.activeScene.context.imageSmoothingEnabled = false;
+            // game.activeScene.context.arc(this.canvas_position.x + this.spriteData.width / 2, this.canvas_position.y, 50, Math.PI, 0);
+            // game.activeScene.context.fill();
+            game.activeScene.context.drawImage(this.sprite, this.spriteData.sx, this.spriteData.sy, this.spriteData.width, this.spriteData.height, this.canvas_position.x - ((this.spriteData.width * 2) - this.size.width) / 2, this.canvas_position.y - this.spriteData.height * 2 + this.size.height, 2 * this.spriteData.width, 2 * this.spriteData.height);
+            game.activeScene.context.closePath();
 
-        // if(this != game.currentPlayer) {
-        //     game.activeScene.context.font = "13px Pixelbroidery";
-        //     game.activeScene.context.textAlign = "center";
-        //     measure = game.activeScene.context.measureText(this.name);
-        //     game.activeScene.context.fillStyle = "white";
-        //     game.activeScene.context.strokeStyle = "black";
-        //     game.activeScene.context.lineWidth = 2;
-        //     game.activeScene.context.strokeText(this.name, this.canvas_position.x+(this.spriteData.width*2 - (measure.width/2))/2, this.canvas_position.y - this.spriteData.height-20);
-        //     game.activeScene.context.fillText(this.name, this.canvas_position.x+(this.spriteData.width*2 - (measure.width/2))/2, this.canvas_position.y - this.spriteData.height-20);
-        // }
+            if (this != game.currentPlayer) {
+                game.activeScene.context.font = "13px Pixelbroidery";
+                game.activeScene.context.textAlign = "center";
+                let measure = game.activeScene.context.measureText(this.name);
+                game.activeScene.context.fillStyle = "white";
+                game.activeScene.context.strokeStyle = "black";
+                game.activeScene.context.lineWidth = 2;
+                game.activeScene.context.strokeText(this.name, this.canvas_position.x + (this.spriteData.width * 2 - (measure.width / 2)) / 2, this.canvas_position.y - this.spriteData.height - 20);
+                game.activeScene.context.fillText(this.name, this.canvas_position.x + (this.spriteData.width * 2 - (measure.width / 2)) / 2, this.canvas_position.y - this.spriteData.height - 20);
+            }
 
-        // context.beginPath();
-        // context.fillStyle = "black";
-        // context.rect(this.canvas_position.x, this.canvas_position.y, this.size.width, this.size.height);
-        // context.fill();
-        // if(this.position.current_tile) {
-        //   context.beginPath();
-        //   context.rect(this.position.current_tile.x, this.position.current_tile.y, 32, 32);
-        //   context.strokeStyle = "red";
-        //   context.stroke();
-        // }
+            // game.activeScene.context.beginPath();
+            // game.activeScene.context.fillStyle = "black";
+            // game.activeScene.context.rect(this.canvas_position.x, this.canvas_position.y, this.size.width, this.size.height);
+            // game.activeScene.context.fill();
+            // if(this.position.current_tile) {
+            //     game.activeScene.context.beginPath();
+            //     game.activeScene.context.rect(this.position.current_tile.x, this.position.current_tile.y, 32, 32);
+            //     game.activeScene.context.strokeStyle = "red";
+            //     game.activeScene.context.stroke();
+            // }
+        }
     }
 
     update() {
@@ -271,8 +273,8 @@ class Player {
                     THIS.step_phase++;
                     THIS.spriteData.sx = THIS.spriteData.animations[THIS.facing[id]][THIS.step].sx;
                     THIS.spriteData.sy = THIS.spriteData.animations[THIS.facing[id]][THIS.step].sy;
-                    THIS.footsteps();
                     that.socket.emit('update player info', "position", { name: THIS.name, position: THIS.position, spriteData: THIS.spriteData });
+                    THIS.footsteps();
                 } else {
                     // THIS.spriteData.sx = THIS.spriteData.animations[THIS.facing[id]][2].sx;
                     // THIS.spriteData.sy = THIS.spriteData.animations[THIS.facing[id]][2].sy;

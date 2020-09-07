@@ -24,7 +24,7 @@ canvas {
 
 #game-chat {
   width: 300px;
-  height: 200px;
+  height: 150px;
   background-color: rgba(0, 0, 0, 0.5);
   position: absolute;
   bottom: 3px;
@@ -36,8 +36,6 @@ canvas {
 #game-chat input {
   width: 100%;
   box-sizing: border-box;
-  position: absolute;
-  bottom: 0;
   background-color: transparent;
   padding: 5px;
   color: white;
@@ -53,8 +51,6 @@ canvas {
 #game-chat #messages {
   color: white;
   width: 100%;
-  height: calc(100% - 25px);
-  max-height: calc(100% - 25px);
 }
 
 #game-chat #messages li {

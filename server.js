@@ -324,11 +324,11 @@ function getElementByIdInArray(arr, el, thing) {
 function onDisconnect(socket, player) {
   socket.broadcast.emit('chat message', player.name + " left");
   console.log(`${player.name} disconnected`);
-  id = getElementByIdInArray(online_players, player, "name");
-  el = online_players[id];
+  let id = getElementByIdInArray(online_players, player, "name");
+  let el = online_players[id];
   con.query(`UPDATE characters SET pos_x = '${el.position.x}', pos_y = '${el.position.y}', location = '${el.location.name}' WHERE character_name='${el.name}'`, function (err, result) {
   if (err) throw err;
-    socket.emit('retrieve userdata', result);
+    // socket.emit('retrieve userdata', result);
   });
   socket.broadcast.emit('remove player', player);
 
@@ -369,18 +369,18 @@ io.on('connection', function(socket){
         online_players[id].position = data.position;
         online_players[id].spriteData = data.spriteData;
         console.log(online_players[id].position);
+        let dataToSend = new Object();
+        dataToSend.position = online_players[id].position;
+        dataToSend.name = online_players[id].name;
+        dataToSend.spriteData = new Object();
+        dataToSend.spriteData.sx = online_players[id].spriteData.sx;
+        dataToSend.spriteData.sy = online_players[id].spriteData.sy;
+        socket.broadcast.emit('update player', dataToSend);
       } else if (type == "location") {
         console.log(online_players[id])
         online_players[id].location.name = data.value;
         retrieveEntities(socket, online_players[id]);
       }
-      let dataToSend = new Object();
-      dataToSend.position = online_players[id].position;
-      dataToSend.name = online_players[id].name;
-      dataToSend.spriteData = new Object();
-      dataToSend.spriteData.sx = online_players[id].spriteData.sx;
-      dataToSend.spriteData.sy = online_players[id].spriteData.sy;
-      socket.broadcast.emit('update player', dataToSend);
     });
   });
 

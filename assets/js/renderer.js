@@ -543,7 +543,7 @@ Game.prototype.teleport = function(location, nx, ny) {
   .then(function(){
     game.currentPlayer.camera.setup();
     game.socket.emit("update player info", "location", {name:game.currentPlayer.name, value:game.currentPlayer.location.name});
-    game.socket.emit("update player info", "position", {name:game.currentPlayer.name, value:game.currentPlayer.position});
+    game.socket.emit("update player info", "position", { name: game.currentPlayer.name, position: game.currentPlayer.position, spriteData: game.currentPlayer.spriteData });
 
     $.each(game.currentPlayer.location.tiles, function(index, value){
       game.currentPlayer.location.tiles[index].x += game.currentPlayer.camera.x;
