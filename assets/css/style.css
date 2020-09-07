@@ -1,5 +1,6 @@
 body {
   margin: 0;
+  background-color: black;
 }
 
 #game {
@@ -13,18 +14,21 @@ canvas {
   user-select: none;
 }
 
-#canvas-box {
+main {
   position: relative;
-  height: 480px;
+  width: 100%;
+  height: 100vh;
 }
 
-#canvas-box canvas {
+#canvas-box {
   position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #game-chat {
   width: 300px;
-  height: 150px;
   background-color: rgba(0, 0, 0, 0.5);
   position: absolute;
   bottom: 3px;
@@ -48,9 +52,20 @@ canvas {
   outline: none;
 }
 
+#game-chat input:focus + #messages {
+  background-color: red !important;
+  color: red !important;
+}
+
 #game-chat #messages {
+  overflow: scroll;
+  display: flex;
+  flex-direction: column-reverse;
   color: white;
   width: 100%;
+  min-height: 50px;
+  max-height: 150px;
+  overflow-x: hidden;
 }
 
 #game-chat #messages li {
@@ -71,6 +86,13 @@ ul {
   font-size: 13px;
   padding: 1px 15px;
   margin: 1px;
-  max-height: 250px;
+  max-height: 200px;
   overflow: scroll;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  overflow-x: hidden;
+  color: white;
 }

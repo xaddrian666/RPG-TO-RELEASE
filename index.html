@@ -8,6 +8,12 @@
     <link rel="stylesheet" href="assets/css/style.css">
   </head>
   <body>
+    <main>
+          <div id="canvas-box">
+            <canvas id="game" width="768" height="480"></canvas>
+            <!-- <canvas id="test" width="768" height="480"></canvas> -->
+          </div>
+    </main>
     <ul id="todo">
       <li>za szybki preload resolve</li>
       <li>wysylaj tylko potrzebne info o graczu na server</li>
@@ -38,11 +44,6 @@
       <!-- <li>preload kazdą wartwe na osobnym canvasie</li> -->
       <!-- <li>osobno każdą warstwe renderuj, if animated - draw 1 of the frame, if not - draw just the one layer</li> -->
     </ul>
-    <div id="canvas-box">
-      <canvas id="game" width="768" height="480"></canvas>
-      <!-- <canvas id="test" width="768" height="480"></canvas> -->
-    </div>
-    <canvas id="test"></canvas>
     <!-- <script src="http://localhost:35729/livereload.js" charset="utf-8"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.15/howler.js" charset="utf-8"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js" charset="utf-8"></script>
