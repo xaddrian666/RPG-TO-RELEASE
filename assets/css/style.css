@@ -27,12 +27,16 @@ main {
   transform: translate(-50%, -50%);
 }
 
+#canvas-box canvas {
+  position: absolute;
+}
+
 #game-chat {
   width: 300px;
   background-color: rgba(0, 0, 0, 0.5);
   position: absolute;
-  bottom: 3px;
-  left: 3px;
+  bottom: 5px;
+  left: 5px;
   cursor: url("../../sprites/cursor1.png"), auto;
   border: solid 1px black;
 }
@@ -52,11 +56,6 @@ main {
   outline: none;
 }
 
-#game-chat input:focus + #messages {
-  background-color: red !important;
-  color: red !important;
-}
-
 #game-chat #messages {
   overflow: scroll;
   display: flex;
@@ -73,6 +72,14 @@ main {
   padding: 3px;
 }
 
+#game-chat #messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+#game-chat #messages::-webkit-scrollbar-thumb {
+  background: #f1f1f1;
+}
+
 #game-chat #arrow {
   width: 6px;
   height: 16px;
@@ -86,7 +93,7 @@ ul {
   font-size: 13px;
   padding: 1px 15px;
   margin: 1px;
-  max-height: 200px;
+  max-height: calc((100vh - 480px) / 2);
   overflow: scroll;
   position: absolute;
   bottom: 0;
@@ -95,4 +102,13 @@ ul {
   width: 60%;
   overflow-x: hidden;
   color: white;
+}
+
+@media only screen and (max-width: 768px) {
+  #canvas-box {
+    width: 100%;
+  }
+  canvas {
+    width: 100%;
+  }
 }

@@ -590,7 +590,7 @@
                         {
                          "name":"can_move",
                          "type":"bool",
-                         "value":false
+                         "value":true
                         }, 
                         {
                          "name":"facing",

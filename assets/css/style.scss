@@ -23,39 +23,31 @@ canvas {
 
 main {
   position: relative;
-  // margin: 0 auto;
-  // height: 480px;
   width: 100%;
   height: 100vh;
 }
 
 #canvas-box {
-
-        position: absolute;
+  position: absolute;
   left: 50%;
   top:50%;
   transform: translate(-50%, -50%);
-    // position: absolute;
   canvas {
-
+    position: absolute;
   }
 }
 
 #game-chat {
   width: 300px;
-  // height: 150px;
   background-color: rgba(0,0,0,0.5);
   position: absolute;
-  bottom: 3px;
-  left: 3px;
+  bottom: 5px;
+  left: 5px;
   cursor: url('../../sprites/cursor1.png'), auto;
   border: solid 1px black;
-  // transition: width 1s, height 1s;
   input {
     width: 100%;
     box-sizing: border-box;
-    // position: absolute;
-    // bottom: 0;
     background-color: transparent;
     padding: 5px;
     color: white;
@@ -64,10 +56,6 @@ main {
     box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
     &:focus {
       outline: none;
-      + #messages {
-        background-color:red!important;
-        color:red!important;
-      }
     }
   }
   #messages {
@@ -79,11 +67,15 @@ main {
     min-height: 50px;
     max-height: 150px;
     overflow-x: hidden;
-    // height: calc(100% - 25px);
-    // max-height: calc(100% - 25px);
     li {
       list-style-type: none;
       padding: 3px;
+    }
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #f1f1f1; 
     }
   }
   #arrow {
@@ -100,7 +92,7 @@ ul {
   font-size: 13px;
   padding: 1px 15px;
   margin: 1px;
-  max-height: 200px;
+  max-height: calc((100vh - 480px) / 2);
   overflow: scroll;
   position: absolute;
   bottom: 0;
@@ -110,10 +102,30 @@ ul {
   overflow-x:hidden;
   color:white;
 }
+@media only screen and (max-width: 768px) {
+  #canvas-box {
+    width: 100%;
+  }
+  canvas {
+    width: 100%;
+  }
+}
 
 // @media only screen and (max-width: 600px) {
 //   #todo {
 //     display: none;
+//   }
+//   #canvas-box {
+//     transform: rotate(90deg);
+//     width: 100%;
+//     height: 100vh;
+//     position: relative;
+//     left: 0;
+//     top: 0;
+//     canvas {
+//       width: 100%;
+//       height: 100%;
+//     }
 //   }
 // }
 //

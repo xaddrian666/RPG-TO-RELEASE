@@ -108,9 +108,9 @@ Game.prototype.scenes = {
         this.context.shadowColor = "transparent";
         img = that.images.windows2;
         this.context.drawImage(img, 64, 0, _sw, _sh, x, 50, _sw * 3, _sh * 3);
-        if(game.currentPlayer.characters[i]) {
-          chname = game.currentPlayer.characters[i].name;
-          spr = that.data.characters[game.currentPlayer.characters[i].sprite];
+        if(game.playerCharacters[i]) {
+          chname = game.playerCharacters[i].character_name;
+          spr = that.data.characters[game.playerCharacters[i].sprite_id];
           // console.log(spr);
           img = new Image();
           img.src = spr.src;
@@ -140,7 +140,7 @@ Game.prototype.scenes = {
       this_scene = this;
       // DRAW NO-TOP
       this_scene.context.globalCompositeOperation = 'source-over';
-      $.each(game.currentPlayer.location.layers, function(index, value) {
+      $.each(game.location.layers, function(index, value) {
         if(value.ontop == true) {
           return true;
         }
@@ -161,13 +161,13 @@ Game.prototype.scenes = {
       });
 
       var ent = [];
-      ent.push(game.currentPlayer);
-      ent.push.apply(ent, game.currentPlayer.location.entities);
+      ent.push(game.player);
+      ent.push.apply(ent, game.location.entities);
       ent.push.apply(ent, game.players);
       // ent.sort(function(a, b){return a.position.y - b.position.y});
 
-      $.each(game.currentPlayer.location.areas, function(index, value) {
-        // $.each(game.currentPlayer.location.areas[index].objects, function(i, v) {
+      $.each(game.location.areas, function(index, value) {
+        // $.each(game.location.areas[index].objects, function(i, v) {
         //
         // });
         if(value.properties) {
@@ -182,13 +182,13 @@ Game.prototype.scenes = {
         }
       });
 
-      $.each(game.currentPlayer.location.layers, function(index, value) {
+      $.each(game.location.layers, function(index, value) {
         if(!value.ontop || value.ontop == false) {
           return true;
         }
         colliding = [];
         if(colliding.length == 0) {
-          tiles_in_layer = game.currentPlayer.location.tiles.filter(function(key){ return key.layer==value.name; });
+          tiles_in_layer = game.location.tiles.filter(function(key){ return key.layer==value.name; });
           $.each(ent, function(i2, v2) {
             $.each(tiles_in_layer, function(i, v) {
               check = that.isColliding(v.x, v.y, game.tilesize*2, game.tilesize*2, v2.canvas_position.x, v2.canvas_position.y, v2.size.width, v2.size.height);
@@ -229,8 +229,8 @@ Game.prototype.scenes = {
         //console.log(v);
         if(v.draw) v.draw();
       });
-      // path = game.currentPlayer.location.path;
-      // current = game.currentPlayer.location.path.result;
+      // path = game.player.location.path;
+      // current = game.player.location.path.result;
       // this_scene.context.beginPath();
       // this_scene.context.moveTo(path.endNode.x + game.activeCamera.x, path.endNode.y + game.activeCamera.y);
       // while(current.parent) {
@@ -241,9 +241,9 @@ Game.prototype.scenes = {
       // }
       // this_scene.context.closePath();
       that.keyboardKeys.INTERACTION.event = undefined;
-      $.each(game.currentPlayer.location.interactions, function(index, value) {
-        DX = (value.x * 2) - game.currentPlayer.position.x;
-        DY = (value.y * 2) - game.currentPlayer.position.y;
+      $.each(game.location.interactions, function(index, value) {
+        DX = (value.x * 2) - game.player.position.x;
+        DY = (value.y * 2) - game.player.position.y;
         DISTANCE = Math.sqrt(Math.pow(DX, 2) + Math.pow(DY, 2));
         if(DISTANCE < 50) {
           TEXT = game.getPropertyValue(value.properties, "text");
@@ -259,11 +259,11 @@ Game.prototype.scenes = {
           }
           this_scene.context.fillStyle = "rgba(0,0,0,0.8)";
           let measure = this_scene.context.measureText(TEXT);
-          this_scene.context.fillRect(game.currentPlayer.canvas_position.x + game.currentPlayer.spriteData.width, game.currentPlayer.canvas_position.y - (game.currentPlayer.spriteData.height * 2), measure.width, 20);
+          this_scene.context.fillRect(game.player.canvas_position.x + game.player.spriteData.width, game.player.canvas_position.y - (game.player.spriteData.height * 2), measure.width, 20);
           this_scene.context.fillStyle = "white";
           this_scene.context.textAlign = "left";
           this_scene.context.font = "13px Pixelbroidery";
-          this_scene.context.fillText(TEXT, game.currentPlayer.canvas_position.x + game.currentPlayer.spriteData.width, game.currentPlayer.canvas_position.y - (game.currentPlayer.spriteData.height * 2) + 13);
+          this_scene.context.fillText(TEXT, game.player.canvas_position.x + game.player.spriteData.width, game.player.canvas_position.y - (game.player.spriteData.height * 2) + 13);
         }
       });
       // darkness = that.scenes.darkness.draw(that);
@@ -281,7 +281,7 @@ Game.prototype.scenes = {
       this.context.fillStyle = "rgba(0,0,0,0.5)";
       this.context.fillRect(0,0,this.canvas.width,this.canvas.height);
       this.context.fillStyle = "red";
-      this.context.fillRect(game.currentPlayer.position.x, game.currentPlayer.position.y, 100, 100);
+      this.context.fillRect(game.player.position.x, game.player.position.y, 100, 100);
       return this.canvas;
     }
   },
@@ -335,7 +335,7 @@ Game.prototype.scenes = {
         this.context.shadowOffsetX = 1;
         this.context.shadowOffsetY = 1;
         this.context.shadowColor = "rgba(0,0,0,0.3)";
-        txt = `x:${Math.floor(game.currentPlayer.position.x)}, y:${Math.floor(game.currentPlayer.position.y)}`;
+        txt = `x:${Math.floor(game.player.position.x)}, y:${Math.floor(game.player.position.y)}`;
         this.context.fillText(txt, that.canvas.width - (116 + (this.context.measureText(txt).width / 2)), 27);
         // this.context.fillText(``, that.canvas.width - 192, 50);
       }
@@ -370,10 +370,10 @@ Game.prototype.scenes = {
         this.context.fillStyle = "white";
         this.context.font = "15px Pixelbroidery";
         this.context.textAlign = "left";
-        this.context.fillText(game.currentPlayer.name, 5, 20);
+        this.context.fillText(game.player.name, 5, 20);
 
-        MAXHP = game.currentPlayer.stats.max_hp;
-        CURRHP = game.currentPlayer.stats.curr_hp;
+        MAXHP = game.player.stats.max_hp;
+        CURRHP = game.player.stats.curr_hp;
 
         percent = (CURRHP * 100) / MAXHP;
 
@@ -432,30 +432,33 @@ Game.prototype.scenes = {
   }
 }
 
-Game.prototype.fade = function(method, time) {
-  let opacity;
-  if(method == "in") {
-    document.getElementById("canvas-box").appendChild(game.scenes.blackScreen.canvas);
-    opacity = 1;
-  } else if(method == "out") {
-    opacity = 0;
-  }
-  $(game.scenes.blackScreen.canvas).animate({
-    opacity: opacity
-  }, time, function() {
-    if(method == "out") {
-      document.getElementById("canvas-box").removeChild(game.scenes.blackScreen.canvas);
+Game.prototype.fade = (method, time) => {
+  return new Promise(resolve => {
+    let opacity;
+    if (method == "in") {
+      let element = document.getElementById("canvas-box").appendChild(game.scenes.blackScreen.canvas);
+      element.style.zIndex = 2;
+      opacity = 1;
+    } else if (method == "out") {
+      opacity = 0;
     }
+    $(game.scenes.blackScreen.canvas).animate({
+      opacity: opacity
+    }, time, function () {
+      if (method == "out") {
+        document.getElementById("canvas-box").removeChild(game.scenes.blackScreen.canvas);
+      }
+      resolve();
+    });
   });
 }
 
 Game.prototype.getLocationFromServer = function() {
   return new Promise(resolve => {
     console.log("Getting map from server..");
-    game.socket.emit('get location data', game.currentPlayer.location.name);
+    game.socket.emit('get location data', game.player.location.name);
     game.socket.on('retrieve location', function(val) {
-      game.currentPlayer.location = val;
-      console.log(game.currentPlayer);
+      game.location = val;
       resolve();
     });
   });
@@ -472,17 +475,16 @@ Object.size = function(obj) {
 Game.prototype.loadTilesets = () => {
   return new Promise(resolve => {
     console.log("Generating tilesets sprites..");
-    console.log(game.currentPlayer.location.tilesets);
-    $.each(game.currentPlayer.location.tilesets, function(i, v) {
+    $.each(game.location.tilesets, function(i, v) {
       let img = new Image();
 
       img.onload = function() {
-        game.currentPlayer.location.tilesets[i].sprite = img;
-        if(i == Object.keys(game.currentPlayer.location.tilesets)[Object.keys(game.currentPlayer.location.tilesets).length-1]) {
+        game.location.tilesets[i].sprite = img;
+        if(i == Object.keys(game.location.tilesets)[Object.keys(game.location.tilesets).length-1]) {
           resolve();
         }
       }
-      game.currentPlayer.location.tilesets[i].sprite = img;
+      game.location.tilesets[i].sprite = img;
       img.src = v.image;
     });
   });
@@ -495,63 +497,75 @@ Game.prototype.loadMap = function() {
   })
   .then(this.getLocationFromServer)
   .then(this.loadTilesets)
-  .then(this.currentPlayer.init.bind(game.currentPlayer))
+  .then(this.player.init.bind(game.player))
   .then(function() {
     return that.preloadMap(game, game.scenes.playing.canvas, game.scenes.playing.context);
   }).then(function(){
-    $.each(game.currentPlayer.location.tiles, function(index, value){
-      game.currentPlayer.location.tiles[index].x += game.currentPlayer.camera.x;
-      game.currentPlayer.location.tiles[index].y += game.currentPlayer.camera.y;
+    $.each(game.location.tiles, function(index, value){
+      game.location.tiles[index].x += game.player.camera.x;
+      game.location.tiles[index].y += game.player.camera.y;
     });
   });
 }
 
-Game.prototype.teleport = function(location, nx, ny) {
-  return new Promise(resolve => {
-    cancelAnimationFrame(game.animationFrame);
-    game.currentPlayer.location.name = location;
-    game.currentPlayer.position.x = nx;
-    game.currentPlayer.position.y = ny;
+Game.prototype.teleport = async (location, nx, ny) => {
+  clearInterval(game.interval);
+  await game.fade("in", 1000)
+  // return new Promise(resolve => {
+  //   // cancelAnimationFrame(game.animationFrame);
+  //   game.player.location.name = location;
+  //   game.player.position.x = nx;
+  //   game.player.position.y = ny;
+  //   game.activeCamera.x = 0;
+  //   game.activeCamera.y = 0;
+  //   LAYERS = {};
+  //   await game.fade("in", 1000);
+  //   // game.scenes.blackScreen.draw();
+  //   // game.scenes.blackScreen.canvas.style.opacity = 0;
+  //   // document.getElementById("canvas-box").appendChild(game.scenes.blackScreen.canvas);
+  //   // $(game.scenes.blackScreen.canvas).animate({
+  //   //   opacity: 1
+  //   // }, 1000, function() {
+  //   //   resolve(game);
+  //   // });
+  //   setTimeout(function(){
+  //     resolve(game);
+  //   }, 1000);
+  // })
+  .then(() => {
+    game.player.location.name = location;
+    game.player.position.x = nx;
+    game.player.position.y = ny;
     game.activeCamera.x = 0;
     game.activeCamera.y = 0;
     LAYERS = {};
-    game.fade("in", 1000);
-    // game.scenes.blackScreen.draw();
-    // game.scenes.blackScreen.canvas.style.opacity = 0;
-    // document.getElementById("canvas-box").appendChild(game.scenes.blackScreen.canvas);
-    // $(game.scenes.blackScreen.canvas).animate({
-    //   opacity: 1
-    // }, 1000, function() {
-    //   resolve(game);
-    // });
-    setTimeout(function(){
-      resolve(game);
-    }, 1000);
   })
-  .then(this.getLocationFromServer)
-  .then(this.loadTilesets)
+  .then(game.getLocationFromServer)
+  .then(game.loadTilesets)
   .then(function() {
     // let test = document.getElementById("test");
     // let test_ctx = test.getContext("2d");
-    // console.log(game.currentPlayer.location.tilesets);
-    // if(game.currentPlayer.location.name == "Woodlands") {
-    //   // test_ctx.drawImage(game.currentPlayer.location.tilesets["outside"].sprite, 0, 0);
+    // console.log(game.player.location.tilesets);
+    // if(game.player.location.name == "Woodlands") {
+    //   // test_ctx.drawImage(game.player.location.tilesets["outside"].sprite, 0, 0);
     // }
 
     return that.preloadMap(game, game.scenes.playing.canvas, game.scenes.playing.context);
   })
   .then(function(){
-    game.currentPlayer.camera.setup();
-    game.socket.emit("update player info", "location", {name:game.currentPlayer.name, value:game.currentPlayer.location.name});
-    game.socket.emit("update player info", "position", { name: game.currentPlayer.name, position: game.currentPlayer.position, spriteData: game.currentPlayer.spriteData });
+    game.player.camera.setup();
+    console.log(game.location);
+    game.socket.emit("update player info", "location", {name:game.player.name, value:game.player.location.name});
+    game.socket.emit("update player info", "position", { name: game.player.name, position: game.player.position, spriteData: game.player.spriteData });
 
-    $.each(game.currentPlayer.location.tiles, function(index, value){
-      game.currentPlayer.location.tiles[index].x += game.currentPlayer.camera.x;
-      game.currentPlayer.location.tiles[index].y += game.currentPlayer.camera.y;
+    $.each(game.location.tiles, function(index, value){
+      game.location.tiles[index].x += game.player.camera.x;
+      game.location.tiles[index].y += game.player.camera.y;
     });
-    game.update();
-    game.fade("out", 1000);
+    // game.update();
   });
+  game.setupInterval();
+  await game.fade("out", 1000);
 }
 
 Game.prototype.layers = [];
@@ -573,29 +587,29 @@ Game.prototype.LAYERS = {};
 
 Game.prototype.preloadMap = function(that, canvas, context) {
   return new Promise(resolve => {
-    // console.log("Preloading map")
+    console.log("Preloading map..")
     let drawingTiles = false,
         drawingLayers = false;
     canvas = document.createElement("canvas");
-    canvas.width = game.currentPlayer.location.data.width * (that.tilesize * 2);
-    canvas.height = game.currentPlayer.location.data.height * (that.tilesize * 2);
+    canvas.width = game.location.data.width * (that.tilesize * 2);
+    canvas.height = game.location.data.height * (that.tilesize * 2);
     context = canvas.getContext("2d");
 
-    game.currentPlayer.location.layers = [];
+    game.location.layers = [];
 
-    $.each(game.currentPlayer.location.tiles, function(i, v) {
+    $.each(game.location.tiles, function(i, v) {
       if(!v.animated || v.animated == false) {
         if(Object.keys(LAYERS).indexOf(v.layer) == -1) {
           current_layer = document.createElement("canvas");
-          current_layer.width = game.currentPlayer.location.data.width * (that.tilesize * 2);
-          current_layer.height = game.currentPlayer.location.data.height * (that.tilesize * 2);
+          current_layer.width = game.location.data.width * (that.tilesize * 2);
+          current_layer.height = game.location.data.height * (that.tilesize * 2);
           obj = {
             canvas: current_layer,
             layer_ctx: current_layer.getContext("2d")
           }
           // current_layer = document.createElement("canvas");
-          // current_layer.width = game.currentPlayer.location.data.width * (that.tilesize * 2);
-          // current_layer.height = game.currentPlayer.location.data.height * (that.tilesize * 2);
+          // current_layer.width = game.location.data.width * (that.tilesize * 2);
+          // current_layer.height = game.location.data.height * (that.tilesize * 2);
           // layer_ctx = current_layer.getContext("2d");
           // LAYERS.canvas = current_layer;
           // LAYERS.context = layer_ctx;
@@ -604,15 +618,15 @@ Game.prototype.preloadMap = function(that, canvas, context) {
           LAYERS[v.layer] = obj;
         }
 
-        let txt = game.currentPlayer.location.textures[v.tile_id-1],
-            tileset = game.currentPlayer.location.tilesets[v.tileset].sprite;
+        let txt = game.location.textures[v.tile_id-1],
+            tileset = game.location.tilesets[v.tileset].sprite;
 
         LAYERS[v.layer].layer_ctx.imageSmoothingEnabled = false;
         LAYERS[v.layer].layer_ctx.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, v.x, v.y, that.tilesize*2, that.tilesize*2);
 
       }
       else {
-        let l = game.currentPlayer.location.data.layers.filter(function(key) { return key.name==v.layer; })[0];
+        let l = game.location.data.layers.filter(function(key) { return key.name==v.layer; })[0];
         let frames = l.properties.filter(function(key) {return key.name=="frames"})[0].value;
         frame_arr = [];
         if(Object.keys(LAYERS).indexOf(v.layer) == -1) {
@@ -625,8 +639,8 @@ Game.prototype.preloadMap = function(that, canvas, context) {
           if(!LAYERS[v.layer].canvas[f]) {
             let frame_canvas = document.createElement("canvas");
             let frame_context = frame_canvas.getContext("2d");
-            frame_canvas.width = game.currentPlayer.location.data.width * (that.tilesize * 2);
-            frame_canvas.height = game.currentPlayer.location.data.height * (that.tilesize * 2);
+            frame_canvas.width = game.location.data.width * (that.tilesize * 2);
+            frame_canvas.height = game.location.data.height * (that.tilesize * 2);
             LAYERS[v.layer].canvas.push(frame_canvas);
           }
 
@@ -634,22 +648,22 @@ Game.prototype.preloadMap = function(that, canvas, context) {
 
           let numer = v.tile_id + (f*3);
 
-          let txt = game.currentPlayer.location.textures[numer-1];
-          let tileset = game.currentPlayer.location.tilesets[v.tileset].sprite;
+          let txt = game.location.textures[numer-1];
+          let tileset = game.location.tilesets[v.tileset].sprite;
           frame_context.imageSmoothingEnabled = false;
           frame_context.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, v.x, v.y, that.tilesize*2, that.tilesize*2);
 
           frame_arr.push(LAYERS[v.layer].canvas[f]);
         }
       }
-      if(i == game.currentPlayer.location.tiles.length-1) {
+      if(i == game.location.tiles.length-1) {
         drawingTiles = true;
       }
     });
 
     $.each(LAYERS, function(i, v) {
       layer = {};
-      let l = game.currentPlayer.location.data.layers.filter(function(key) { return key.name==i; })[0];
+      let l = game.location.data.layers.filter(function(key) { return key.name==i; })[0];
       if(l.properties) {
         chk = l.properties.filter(function(key) { return key.name=="animated"; });
         if(chk.length > 0) {
@@ -673,7 +687,7 @@ Game.prototype.preloadMap = function(that, canvas, context) {
       $.each(l.properties, function(i, v) {
         layer[v.name] = v.value;
       });
-      game.currentPlayer.location.layers.push(layer);
+      game.location.layers.push(layer);
       if(i == Object.keys(LAYERS)[Object.keys(LAYERS).length-1]) {
         drawingLayers = true;
       }
@@ -716,13 +730,11 @@ Game.prototype.menu = {
     {x: 288, y: 300, text: "Go back", scene: "settings", active: false, action: function() { game.activeScene = game.scenes.menu; game.playSound("button2", 0.3); }},
     {x: 288, y: 300, text: "Go back", scene: "credits", active: false, action: function() { game.activeScene = game.scenes.menu; game.playSound("button2", 0.3); }},
     {x: 288, y: 300, text: "Go back", scene: "character_selection", active: false, action: function() { game.activeScene = game.scenes.menu; game.playSound("button2", 0.3); }},
-    {x: 500, y: 300, text: "Play", scene: "character_selection", active: false, action: function() {
+    {x: 500, y: 300, text: "Play", scene: "character_selection", active: false, action: async function() {
       game.playSound("button2", 0.3);
-      game.fade("in", 1000);
-      setTimeout(function(){
-        game.activeScene = game.scenes.playing;
-      }, 1000);
-      game.fade("out", 1000);
+      await game.fade("in", 1000);
+      await game.loadGame();
+      await game.fade("out", 1000);
       // game.loadGame();
     }}
   ]

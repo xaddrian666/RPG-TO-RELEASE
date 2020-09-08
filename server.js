@@ -1,4 +1,4 @@
-// const pf = require("./assets/js/pathfinder")
+const pf = require("./assets/js/pathfinder");
 var express = require('express');
 var $ = require('jquery');
 var app = express();
@@ -39,6 +39,10 @@ var locations = {
   dungeon: {
     name: "Dungeon",
     src: "maps/dungeon.json"
+  },
+  test: {
+    name: "Test",
+    src: "maps/test.json"
   }
 }
 
@@ -196,7 +200,6 @@ var entities = [];
 
 new Promise(resolve => {
   console.log("Server starting..");
-  // console.log(pf.pathfinder);
   resolve();
 }).then(getLocationsJSON)
   .then(loadTilesets)
@@ -205,6 +208,7 @@ new Promise(resolve => {
     // let path = new pf.pathfinder(576, 960, 672, 960, locations["woodlands"]);
     // path.findPath();
     // locations["woodlands"].path = path;
+    //let path = new pf(32, 32, 128, 128, locations.woodlands).findPath().then(res => console.log(res));
     for(var i=0;i<ENTITIES_TO_SPAWN.length;i++) {
       ENTITY = ENTITIES_TO_SPAWN[i];
       entities.push(new Entity(ENTITY));
@@ -368,7 +372,7 @@ io.on('connection', function(socket){
       if (type == "position") {
         online_players[id].position = data.position;
         online_players[id].spriteData = data.spriteData;
-        console.log(online_players[id].position);
+        // console.log(online_players[id].position);
         let dataToSend = new Object();
         dataToSend.position = online_players[id].position;
         dataToSend.name = online_players[id].name;
@@ -377,8 +381,7 @@ io.on('connection', function(socket){
         dataToSend.spriteData.sy = online_players[id].spriteData.sy;
         socket.broadcast.emit('update player', dataToSend);
       } else if (type == "location") {
-        console.log(online_players[id])
-        online_players[id].location.name = data.value;
+        online_players[id].location.name = data.value.charAt(0).toUpperCase() + data.value.slice(1);
         retrieveEntities(socket, online_players[id]);
       }
     });
@@ -399,13 +402,19 @@ io.on('connection', function(socket){
   //   // io.broadcast.emit('update players', online_players);
   // });
 
-  socket.on('get userdata from db', function(data) {
+  socket.on('get character from db', function(data) {
     let userName = data.player;
     let characterName = data.character;
     con.query(`SELECT * FROM characters c WHERE c.owner_name="${userName}" AND c.character_name="${characterName}"`, function (err, result) {
     if (err) throw err;
-    console.log(result);
-    socket.emit('retrieve userdata', result[0]);
+    socket.emit('retrieve character from db', result[0]);
+    });
+  });
+
+  socket.on('get player from db', function(userName) {
+    con.query(`SELECT * FROM users u LEFT JOIN characters c ON u.name = c.owner_name WHERE u.name="${userName}"`, function (err, result) {
+    if (err) throw err;
+    socket.emit('retrieve player from db', result);
     });
   });
   socket.on('chat message', function(txt) {

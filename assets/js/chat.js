@@ -62,11 +62,11 @@ Game.prototype.turnOnChat = function() {
   });
 
   $("#game").click(function() {
-    game.currentPlayer.movement();
+    game.player.movement();
   });
 
   $("#chat-input").submit(function() {
-    game.socket.emit('chat message', game.currentPlayer.name + ": " +$(this).val());
+    game.socket.emit('chat message', game.player.name + ": " +$(this).val());
     $(this).val("")
   });
 

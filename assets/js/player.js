@@ -17,7 +17,7 @@ class Player {
         curr_hp: 60
     }
     size = { width:20, height:12 }
-    speed = 2.3
+    speed = 2.5
     state = "idle"
     fov = 200
 
@@ -25,48 +25,48 @@ class Player {
         x: 0,
         y: 0,
         setup: function() {
-            let px = game.currentPlayer.position.x - Math.abs(game.activeCamera.x);
-            let py = game.currentPlayer.position.y - Math.abs(game.activeCamera.y);
+            let px = game.player.position.x - Math.abs(game.activeCamera.x);
+            let py = game.player.position.y - Math.abs(game.activeCamera.y);
 
             this.x = -(px - that.canvas.width / 2);
             if (this.x > 0) {
             this.x = 0;
-            } else if (Math.abs(this.x) - that.tilesize * 2 > (game.currentPlayer.location.data.width) * (that.tilesize)) {
-            this.x = -((game.currentPlayer.location.data.width * (that.tilesize * 2)) - that.canvas.width);
+            } else if (Math.abs(this.x) - that.tilesize * 2 > (game.location.data.width) * (that.tilesize)) {
+            this.x = -((game.location.data.width * (that.tilesize * 2)) - that.canvas.width);
             }
             this.y = -(py - that.canvas.height / 2);
             if (this.y > 0) {
             this.y = 0;
-            } else if (Math.abs(this.y) - that.tilesize * 2 > (game.currentPlayer.location.data.height * (that.tilesize * 2)) - that.canvas.height) {
-            this.y = -((game.currentPlayer.location.data.height * (that.tilesize * 2)) - that.canvas.height);
+            } else if (Math.abs(this.y) - that.tilesize * 2 > (game.location.data.height * (that.tilesize * 2)) - that.canvas.height) {
+            this.y = -((game.location.data.height * (that.tilesize * 2)) - that.canvas.height);
             }
         },
         move: function(dir) {
-            if (game.currentPlayer.canvas_position.x + game.currentPlayer.fov >= that.canvas.width && dir == "right" && that.activeCamera.x > -game.currentPlayer.location.data.width * (that.tilesize * 2) + that.canvas.width + game.currentPlayer.speed) {
-            game.currentPlayer.camera.x -= game.currentPlayer.speed;
-            $.each(game.currentPlayer.location.tiles, function (index, value) {
-            game.currentPlayer.location.tiles[index].x -= game.currentPlayer.speed;
+            if (game.player.canvas_position.x + game.player.fov >= that.canvas.width && dir == "right" && that.activeCamera.x > -game.location.data.width * (that.tilesize * 2) + that.canvas.width + game.player.speed) {
+            game.player.camera.x -= game.player.speed;
+            $.each(game.location.tiles, function (index, value) {
+            game.location.tiles[index].x -= game.player.speed;
             });
             return true;
             }
-            if (game.currentPlayer.canvas_position.x - game.currentPlayer.fov <= 0 && dir == "left" && that.activeCamera.x < 0 - game.currentPlayer.speed) {
-            game.currentPlayer.camera.x -= -game.currentPlayer.speed;
-            $.each(game.currentPlayer.location.tiles, function (index, value) {
-            game.currentPlayer.location.tiles[index].x -= -game.currentPlayer.speed;
+            if (game.player.canvas_position.x - game.player.fov <= 0 && dir == "left" && that.activeCamera.x < 0 - game.player.speed) {
+            game.player.camera.x -= -game.player.speed;
+            $.each(game.location.tiles, function (index, value) {
+            game.location.tiles[index].x -= -game.player.speed;
             });
             return true;
             }
-            if (game.currentPlayer.canvas_position.y + game.currentPlayer.fov >= that.canvas.height && dir == "down" && that.activeCamera.y > -game.currentPlayer.location.data.height * (that.tilesize * 2) + that.canvas.height + game.currentPlayer.speed) {
-            game.currentPlayer.camera.y -= game.currentPlayer.speed;
-            $.each(game.currentPlayer.location.tiles, function (index, value) {
-            game.currentPlayer.location.tiles[index].y -= game.currentPlayer.speed;
+            if (game.player.canvas_position.y + game.player.fov >= that.canvas.height && dir == "down" && that.activeCamera.y > -game.location.data.height * (that.tilesize * 2) + that.canvas.height + game.player.speed) {
+            game.player.camera.y -= game.player.speed;
+            $.each(game.location.tiles, function (index, value) {
+            game.location.tiles[index].y -= game.player.speed;
             });
             return true;
             }
-            if (game.currentPlayer.canvas_position.y - game.currentPlayer.fov <= 0 && dir == "up" && that.activeCamera.y < 0 - game.currentPlayer.speed) {
-            game.currentPlayer.camera.y -= -game.currentPlayer.speed;
-            $.each(game.currentPlayer.location.tiles, function (index, value) {
-            game.currentPlayer.location.tiles[index].y -= -game.currentPlayer.speed;
+            if (game.player.canvas_position.y - game.player.fov <= 0 && dir == "up" && that.activeCamera.y < 0 - game.player.speed) {
+            game.player.camera.y -= -game.player.speed;
+            $.each(game.location.tiles, function (index, value) {
+            game.location.tiles[index].y -= -game.player.speed;
             });
             return true;
             }
@@ -105,11 +105,7 @@ class Player {
             }
         }
         if (this.step_phase % (10 * n) == 0) {
-            if (this.step == 0) {
-                this.step = 1;
-            } else {
-                this.step = 0;
-            }
+            this.step = this.step == 0 ? 1 : 0;
         }
     }
     move(value, coord) {
@@ -120,7 +116,7 @@ class Player {
 
         let can_go = true;
         let the_tiles = [];
-        $.each(this.location.tiles, function (index, value) {
+        $.each(game.location.tiles, function (index, value) {
             if (that.isColliding(value.x, value.y, that.tilesize * 2, that.tilesize * 2, newpos.cx, newpos.cy, _this.size.width, _this.size.height) == true) {
                 the_tiles.push(value);
             }
@@ -169,7 +165,7 @@ class Player {
             }
         });
 
-        if (can_go == true && newpos.x > 0 && newpos.y > 0 && newpos.x < (_this.location.data.width * (that.tilesize * 2)) && newpos.y < (_this.location.data.height * (that.tilesize * 2))) {
+        if (can_go == true && newpos.x > 0 && newpos.y > 0 && newpos.x < (game.location.data.width * (that.tilesize * 2)) && newpos.y < (game.location.data.height * (that.tilesize * 2))) {
             this.position[coord] += value * this.speed;
             return true;
         }
@@ -197,21 +193,21 @@ class Player {
     movement() {
     $(document).bind("keydown", function (e) {
         if (e.keyCode == 65 || e.keyCode == 68 || e.keyCode == 87 || e.keyCode == 83) {
-            game.currentPlayer.moving[game.currentPlayer.utilities.keys[e.keyCode]].state = true;
-            var index = game.currentPlayer.facing.indexOf(game.currentPlayer.utilities.keys[e.keyCode]);
+            game.player.moving[game.player.utilities.keys[e.keyCode]].state = true;
+            var index = game.player.facing.indexOf(game.player.utilities.keys[e.keyCode]);
             if (index == -1) {
-                game.currentPlayer.facing.push(game.currentPlayer.utilities.keys[e.keyCode]);
+                game.player.facing.push(game.player.utilities.keys[e.keyCode]);
             }
         }
     });
     $(document).bind("keyup", function (e) {
         if (e.keyCode == 65 || e.keyCode == 68 || e.keyCode == 87 || e.keyCode == 83) {
-            game.currentPlayer.moving[game.currentPlayer.utilities.keys[e.keyCode]].state = false;
-            game.currentPlayer.spriteData.sy = game.currentPlayer.spriteData.animations[game.currentPlayer.utilities.keys[e.keyCode]][2].sy;
-            game.currentPlayer.spriteData.sx = game.currentPlayer.spriteData.animations[game.currentPlayer.utilities.keys[e.keyCode]][2].sx;
-            var index = game.currentPlayer.facing.indexOf(game.currentPlayer.utilities.keys[e.keyCode]);
+            game.player.moving[game.player.utilities.keys[e.keyCode]].state = false;
+            game.player.spriteData.sy = game.player.spriteData.animations[game.player.utilities.keys[e.keyCode]][2].sy;
+            game.player.spriteData.sx = game.player.spriteData.animations[game.player.utilities.keys[e.keyCode]][2].sx;
+            var index = game.player.facing.indexOf(game.player.utilities.keys[e.keyCode]);
             if (index != -1) {
-                game.currentPlayer.facing.splice(index, 1);
+                game.player.facing.splice(index, 1);
             }
         }
     });
@@ -220,9 +216,9 @@ class Player {
     getCurrentTile() {
         let tx = Math.floor((this.position.x + this.size.width / 2) / (game.tilesize * 2));
         let ty = Math.floor((this.position.y + this.size.height / 2) / (game.tilesize * 2));
-        let tile = (ty * game.currentPlayer.location.data.width) + tx;
+        let tile = (ty * game.location.data.width) + tx;
 
-        let id = game.currentPlayer.location.tiles.filter(function (key) {
+        let id = game.location.tiles.filter(function (key) {
             return key.id == tile;
         });
         this.position.current_tile = id;
@@ -238,7 +234,7 @@ class Player {
             game.activeScene.context.drawImage(this.sprite, this.spriteData.sx, this.spriteData.sy, this.spriteData.width, this.spriteData.height, this.canvas_position.x - ((this.spriteData.width * 2) - this.size.width) / 2, this.canvas_position.y - this.spriteData.height * 2 + this.size.height, 2 * this.spriteData.width, 2 * this.spriteData.height);
             game.activeScene.context.closePath();
 
-            if (this != game.currentPlayer) {
+            if (this != game.player) {
                 game.activeScene.context.font = "13px Pixelbroidery";
                 game.activeScene.context.textAlign = "center";
                 let measure = game.activeScene.context.measureText(this.name);
@@ -289,7 +285,7 @@ class Player {
         this.spriteData = game.data.characters[this.spriteId]
         this.sprite = await game.loadImage(this.spriteData.src);
         this.getCurrentTile();
-        if(this == game.currentPlayer) {
+        if(this == game.player) {
             this.camera.setup();
             this.movement();
             game.socket.emit('player joined', this);

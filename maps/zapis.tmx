@@ -2560,7 +2560,7 @@
   </object>
   <object id="27" x="260" y="244">
    <properties>
-    <property name="can_move" type="bool" value="false"/>
+    <property name="can_move" type="bool" value="true"/>
     <property name="facing" value="down"/>
     <property name="monster" type="bool" value="true"/>
     <property name="name" value="Elk"/>

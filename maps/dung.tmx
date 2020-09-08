@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-up" width="50" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="2">
+<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-up" width="50" height="50" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="3">
  <tileset firstgid="1" name="dungeon" tilewidth="16" tileheight="16" tilecount="1479" columns="51">
   <image source="../sprites/dungeon.png" width="816" height="464"/>
   <terraintypes>
@@ -489,6 +489,20 @@
     <property name="to_x" type="int" value="944"/>
     <property name="to_y" type="int" value="968"/>
     <property name="type" value="teleport"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="6" name="Entities">
+  <properties>
+   <property name="type" value="entities"/>
+  </properties>
+  <object id="2" x="127" y="488">
+   <properties>
+    <property name="can_move" type="bool" value="false"/>
+    <property name="facing" value="down"/>
+    <property name="name" value="Guard 2"/>
+    <property name="type" value="guard1"/>
    </properties>
    <point/>
   </object>

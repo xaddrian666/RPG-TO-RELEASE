@@ -1,5 +1,5 @@
 Game.prototype.Entity = function(config) {
-  this.id = game.currentPlayer.location.entities.length;
+  this.id = game.location.entities.length;
   this.type = game.data.entities[config.type];
   this.speed = 2;
   this.state = undefined;
@@ -98,20 +98,10 @@ Game.prototype.Entity = function(config) {
   this.img = new Image();
 
   this.init = function() {
-    if(config.name) {
-      this.name = config.name;
-    }
-    if(!config.facing) {
-      this.facing = "left";
-    } else {
-      this.facing = config.facing;
-    }
-    if(config.location) {
-      this.location = config.location;
-    }
-    if(config.area) {
-      this.area = config.area;
-    }
+    if(config.name) this.name = config.name;
+    if (config.location) this.location = config.location;
+    if (config.area) this.area = config.area;
+    this.facing = !config.facing ? "down" : config.facing;
     let _that = this;
     game.socket.on("move entity"+this.id, function(obj) {
       _that.setTarget(obj.x, obj.y);
