@@ -490,81 +490,29 @@ Game.prototype.loadTilesets = () => {
   });
 }
 
-Game.prototype.loadMap = function() {
-  return new Promise(resolve => {
-    LAYERS = {};
-    resolve(game);
-  })
-  .then(this.getLocationFromServer)
-  .then(this.loadTilesets)
-  .then(this.player.init.bind(game.player))
-  .then(function() {
-    return that.preloadMap(game, game.scenes.playing.canvas, game.scenes.playing.context);
-  }).then(function(){
-    $.each(game.location.tiles, function(index, value){
-      game.location.tiles[index].x += game.player.camera.x;
-      game.location.tiles[index].y += game.player.camera.y;
-    });
-  });
-}
-
 Game.prototype.teleport = async (location, nx, ny) => {
-  clearInterval(game.interval);
+  cancelAnimationFrame(game.animationFrame);
+  $(document).unbind("keydown");
+  $(document).unbind("keyup");
   await game.fade("in", 1000)
-  // return new Promise(resolve => {
-  //   // cancelAnimationFrame(game.animationFrame);
-  //   game.player.location.name = location;
-  //   game.player.position.x = nx;
-  //   game.player.position.y = ny;
-  //   game.activeCamera.x = 0;
-  //   game.activeCamera.y = 0;
-  //   LAYERS = {};
-  //   await game.fade("in", 1000);
-  //   // game.scenes.blackScreen.draw();
-  //   // game.scenes.blackScreen.canvas.style.opacity = 0;
-  //   // document.getElementById("canvas-box").appendChild(game.scenes.blackScreen.canvas);
-  //   // $(game.scenes.blackScreen.canvas).animate({
-  //   //   opacity: 1
-  //   // }, 1000, function() {
-  //   //   resolve(game);
-  //   // });
-  //   setTimeout(function(){
-  //     resolve(game);
-  //   }, 1000);
-  // })
   .then(() => {
     game.player.location.name = location;
     game.player.position.x = nx;
     game.player.position.y = ny;
     game.activeCamera.x = 0;
     game.activeCamera.y = 0;
-    LAYERS = {};
+    LAYERS = new Object();
   })
-  .then(game.getLocationFromServer)
-  .then(game.loadTilesets)
-  .then(function() {
-    // let test = document.getElementById("test");
-    // let test_ctx = test.getContext("2d");
-    // console.log(game.player.location.tilesets);
-    // if(game.player.location.name == "Woodlands") {
-    //   // test_ctx.drawImage(game.player.location.tilesets["outside"].sprite, 0, 0);
-    // }
-
-    return that.preloadMap(game, game.scenes.playing.canvas, game.scenes.playing.context);
-  })
+  .then(game.loadMap)
   .then(function(){
+    console.log('map preloaded');
     game.player.camera.setup();
+    game.player.movement();
     console.log(game.location);
     game.socket.emit("update player info", "location", {name:game.player.name, value:game.player.location.name});
     game.socket.emit("update player info", "position", { name: game.player.name, position: game.player.position, spriteData: game.player.spriteData });
-
-    $.each(game.location.tiles, function(index, value){
-      game.location.tiles[index].x += game.player.camera.x;
-      game.location.tiles[index].y += game.player.camera.y;
-    });
-    // game.update();
   });
-  game.setupInterval();
+  game.update();
   await game.fade("out", 1000);
 }
 
@@ -582,8 +530,63 @@ function Layer(data) {
   }
 }
 
-Game.prototype.animated_tiles = [];
-Game.prototype.LAYERS = {};
+Game.prototype.animated_tiles = new Array();
+Game.prototype.LAYERS = new Object();
+
+Game.prototype.createLayer = async () => {
+  let current_layer = document.createElement("canvas");
+  current_layer.width = game.location.data.width * (that.tilesize * 2);
+  current_layer.height = game.location.data.height * (that.tilesize * 2);
+  let obj = {
+    canvas: current_layer,
+    layer_ctx: current_layer.getContext("2d")
+  }
+
+  LAYERS[layer.name] = obj;
+  console.log(layer);
+}
+
+Game.prototype.prepareLayers = () => {
+  return new Promise(resolve => {
+    for (let i=0;i<game.location.data.layers.length-1;i++) {
+      let layer = game.location.data.layers[i];
+      let obj = new Object();
+      if(layer.properties) {
+        obj.properties = new Object();
+        for(let prop of layer.properties) {
+          obj.properties[prop.name] = prop.value;
+        }
+      }
+      if(layer.type == "tilelayer") {
+        let current_layer = document.createElement("canvas");
+        current_layer.width = game.location.data.width * (that.tilesize * 2);
+        current_layer.height = game.location.data.height * (that.tilesize * 2);
+        if(obj.properties && obj.properties.animated) {
+          obj = {
+            canvas: []
+          }
+        } else {
+          obj = {
+            canvas: current_layer,
+            layer_ctx: current_layer.getContext("2d")
+          }
+        }
+
+        LAYERS[layer.name] = obj;
+        console.log(obj);
+      }
+    }
+    resolve();
+  });
+}
+
+Game.prototype.loadMap = async () => {
+  LAYERS = new Object();
+  return await game.getLocationFromServer()
+    .then(game.loadTilesets)
+    .then(game.prepareLayers)
+    .then(() => game.preloadMap(game, game.scenes.playing.canvas, game.scenes.playing.context));
+}
 
 Game.prototype.preloadMap = function(that, canvas, context) {
   return new Promise(resolve => {
@@ -595,74 +598,57 @@ Game.prototype.preloadMap = function(that, canvas, context) {
     canvas.height = game.location.data.height * (that.tilesize * 2);
     context = canvas.getContext("2d");
 
-    game.location.layers = [];
+    game.location.layers = new Array();
 
-    $.each(game.location.tiles, function(i, v) {
-      if(!v.animated || v.animated == false) {
-        if(Object.keys(LAYERS).indexOf(v.layer) == -1) {
-          current_layer = document.createElement("canvas");
-          current_layer.width = game.location.data.width * (that.tilesize * 2);
-          current_layer.height = game.location.data.height * (that.tilesize * 2);
-          obj = {
-            canvas: current_layer,
-            layer_ctx: current_layer.getContext("2d")
+    console.log(LAYERS);
+
+    for(const [xIndex, xVal] of game.location.tiles.entries()) {
+      for(const [yIndex, yVal] of game.location.tiles[xIndex].entries()) {
+        let currentTiles = game.location.tiles[xIndex][yIndex];
+        for(const currentTile of currentTiles) {
+            if (!currentTile.animated) {
+              let txt = game.location.textures[currentTile.tile_id - 1],
+                tileset = game.location.tilesets[currentTile.tileset].sprite;
+
+              LAYERS[currentTile.layer].layer_ctx.imageSmoothingEnabled = false;
+              LAYERS[currentTile.layer].layer_ctx.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, currentTile.x, currentTile.y, that.tilesize * 2, that.tilesize * 2);
+
+            }
+            else {
+              let l = game.location.data.layers.filter(function (key) { return key.name == currentTile.layer; })[0];
+              let frames = l.properties.filter(function (key) { return key.name == "frames" })[0].value;
+              frame_arr = [];
+              for (var f = 0; f < frames; f++) {
+                if (!LAYERS[currentTile.layer].canvas[f]) {
+                  let frame_canvas = document.createElement("canvas");
+                  let frame_context = frame_canvas.getContext("2d");
+                  frame_canvas.width = game.location.data.width * (that.tilesize * 2);
+                  frame_canvas.height = game.location.data.height * (that.tilesize * 2);
+                  LAYERS[currentTile.layer].canvas.push(frame_canvas);
+                }
+
+                frame_context = LAYERS[currentTile.layer].canvas[f].getContext("2d");
+
+                let numer = currentTile.tile_id + (f * 3);
+
+                let txt = game.location.textures[numer - 1];
+                let tileset = game.location.tilesets[currentTile.tileset].sprite;
+                frame_context.imageSmoothingEnabled = false;
+                frame_context.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, currentTile.x, currentTile.y, that.tilesize * 2, that.tilesize * 2);
+
+                frame_arr.push(LAYERS[currentTile.layer].canvas[f]);
+              }
+            }
+          if (xIndex == game.location.tiles.length - 1 && yIndex == game.location.tiles[xIndex].length-1) {
+            drawingTiles = true;
           }
-          // current_layer = document.createElement("canvas");
-          // current_layer.width = game.location.data.width * (that.tilesize * 2);
-          // current_layer.height = game.location.data.height * (that.tilesize * 2);
-          // layer_ctx = current_layer.getContext("2d");
-          // LAYERS.canvas = current_layer;
-          // LAYERS.context = layer_ctx;
-          // layer = {};
-          // LAYERS.frame_arr = frame_arr;
-          LAYERS[v.layer] = obj;
-        }
-
-        let txt = game.location.textures[v.tile_id-1],
-            tileset = game.location.tilesets[v.tileset].sprite;
-
-        LAYERS[v.layer].layer_ctx.imageSmoothingEnabled = false;
-        LAYERS[v.layer].layer_ctx.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, v.x, v.y, that.tilesize*2, that.tilesize*2);
-
-      }
-      else {
-        let l = game.location.data.layers.filter(function(key) { return key.name==v.layer; })[0];
-        let frames = l.properties.filter(function(key) {return key.name=="frames"})[0].value;
-        frame_arr = [];
-        if(Object.keys(LAYERS).indexOf(v.layer) == -1) {
-          obj = {
-            canvas: []
           }
-          LAYERS[v.layer] = obj;
-        }
-        for(var f=0;f<frames;f++) {
-          if(!LAYERS[v.layer].canvas[f]) {
-            let frame_canvas = document.createElement("canvas");
-            let frame_context = frame_canvas.getContext("2d");
-            frame_canvas.width = game.location.data.width * (that.tilesize * 2);
-            frame_canvas.height = game.location.data.height * (that.tilesize * 2);
-            LAYERS[v.layer].canvas.push(frame_canvas);
-          }
-
-          frame_context = LAYERS[v.layer].canvas[f].getContext("2d");
-
-          let numer = v.tile_id + (f*3);
-
-          let txt = game.location.textures[numer-1];
-          let tileset = game.location.tilesets[v.tileset].sprite;
-          frame_context.imageSmoothingEnabled = false;
-          frame_context.drawImage(tileset, txt.sx, txt.sy, that.tilesize, that.tilesize, v.x, v.y, that.tilesize*2, that.tilesize*2);
-
-          frame_arr.push(LAYERS[v.layer].canvas[f]);
         }
       }
-      if(i == game.location.tiles.length-1) {
-        drawingTiles = true;
-      }
-    });
+      // drawingTiles = true;
 
     $.each(LAYERS, function(i, v) {
-      layer = {};
+      let layer = new Object();
       let l = game.location.data.layers.filter(function(key) { return key.name==i; })[0];
       if(l.properties) {
         chk = l.properties.filter(function(key) { return key.name=="animated"; });

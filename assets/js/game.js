@@ -184,14 +184,17 @@ function Game() {
         audio.onloadeddata = function() {
           // that.sounds.push(audio);
           that.sounds[value.title] = audio;
+          if(index == sources.length-1) {
+            resolve();
+          }
         }
       });
-      checker = setInterval(function() {
-        if(Object.keys(that.sounds).length == sources.length) {
-          clearInterval(checker);
-          resolve();
-        }
-      }, 200);
+      // checker = setInterval(function() {
+      //   if(Object.keys(that.sounds).length == sources.length) {
+      //     clearInterval(checker);
+      //     resolve();
+      //   }
+      // }, 200);
     });
   }
 
@@ -206,9 +209,10 @@ function Game() {
   }
 
   this.loadPlayerData = function() {
+    let self = this;
     return new Promise(resolve => {
-      game.socket.emit('get player from db', game.gamename);
-      game.socket.on('retrieve player from db', function(res) {
+      self.socket.emit('get player from db', self.gamename);
+      self.socket.on('retrieve player from db', function(res) {
         resolve(res);
       });
     });
@@ -232,31 +236,31 @@ function Game() {
   }
 
   this.setupListeners = function() {
-    game.socket.on('remove player', function(player) {
-      console.log(player);
-      let _player = game.players.map(function (key) { return key.name; }).indexOf(player.name);
-      game.players.splice(_player, 1);
+    let self = this;
+    self.socket.on('remove player', function(player) {
+      let _player = self.players.map(function (key) { return key.name; }).indexOf(player.name);
+      self.players.splice(_player, 1);
     });
-    game.socket.on('get entities', function(data) {
-      let _entity = new game.Entity(data);
-      game.location.entities.push(_entity);
+    self.socket.on('get entities', function(data) {
+      let _entity = new self.Entity(data);
+      self.location.entities.push(_entity);
       _entity.init();
     });
-    game.socket.on('update player', function(data) {
+    self.socket.on('update player', function(data) {
       let _playerName = data.name;
-      let _player = game.players.map(function (key) { return key.name; }).indexOf(_playerName);
+      let _player = self.players.map(function (key) { return key.name; }).indexOf(_playerName);
       console.log(_player);
       if(_player != -1) {
-        game.players[_player].position = data.position;
-        game.players[_player].spriteData.sx = data.spriteData.sx;
-        game.players[_player].spriteData.sy = data.spriteData.sy;
+        self.players[_player].position = data.position;
+        self.players[_player].spriteData.sx = data.spriteData.sx;
+        self.players[_player].spriteData.sy = data.spriteData.sy;
       }
     });
-    game.socket.on('get players', function (arr) {
-      // game.players = [];
+    self.socket.on('get players', function (arr) {
+      // self.players = [];
       console.log(arr);
       $.each(arr, function (i, v) {
-        if (v.name != game.player.name) {
+        if (v.name != self.player.name) {
           let obj = new Object();
           obj.pos_x = v.position.x;
           obj.pos_y = v.position.y;
@@ -266,7 +270,7 @@ function Game() {
           let np = new Player(obj);
           np.init();
           console.log(np);
-          game.players.push(np);
+          self.players.push(np);
         }
       });
     });
@@ -292,29 +296,37 @@ function Game() {
     this.setupPlayerPanel();
     this.activeScene = this.scenes.menu;
     this.mouseEvent();
-    if (window.innerWidth < game.properties.width) {
-      game.properties.width = window.innerHeight;
-      game.properties.height = window.innerWidth;
+    if (window.innerWidth < this.properties.width) {
+      this.properties.width = window.innerHeight;
+      this.properties.height = window.innerWidth;
     }
+    let self = this;
     $.each(this.scenes, function (index, value) {
-      value.canvas.width = game.properties.width;
-      value.canvas.height = game.properties.height;
+      value.canvas.width = self.properties.width;
+      value.canvas.height = self.properties.height;
       value.getContext();
       if (value.init) {
         value.init();
       }
     });
-    this.setupInterval();
+    // this.setupInterval();
+    this.update();
     console.log('done');
+    this.loadGame();
   }
 
   this.loadGame = async () => {
-    this.characterName = prompt();
+    // this.characterName = prompt();
+    this.characterName = 'noob';
     console.log('Loading game..');
     this.setupListeners();
     await this.loadCharacterData().then(res => this.player = new Player(res));
+    this.player.init();
     await this.loadImages(this.data.gameImages);
     await this.loadMap().then(canvas => this.player.screen = canvas);
+    this.player.camera.setup();
+    this.player.movement();
+    this.socket.emit('player joined', this.player);
     this.activeCamera = this.player.camera;
     this.activeScene = this.scenes.playing;
     this.turnOnChat();
@@ -325,78 +337,6 @@ function Game() {
   this.setupInterval = () => {
     this.interval = setInterval(this.update.bind(game), 1000/60);
   }
-
-  // this.init = function() {
-  //   that = this;
-  //   return new Promise(resolve => {
-  //     console.log("Loading started..");
-  //     that.setupListeners();
-  //     resolve(this);
-  //   })
-  //   .then(this.loadData.bind(this))
-  //   .then(function(that){
-  //     return that.loadImages(that.menuImages)
-  //   })
-  //   .then(this.loadSounds.bind(this))
-  //   .then(this.loadFonts.bind(this))
-  //   .then(function() {
-  //     return new Promise(resolve => {
-  //       console.log("Turning on some functions");
-  //       that.turnOnKeyboard();
-  //       that.setupPlayerPanel();
-  //       // that.activeScene = that.scenes.menu;
-  //       that.mouseEvent();
-  //       $.each(that.scenes, function(index, value) {
-  //         value.canvas.width = that.properties.width;
-  //         value.canvas.height = that.properties.height;
-  //         value.getContext();
-  //         if(value.init) {
-  //           value.init();
-  //         }
-  //       });
-  //       resolve();
-  //     });
-  //   })
-  //   // .then(function(){
-  //   //   return new Promise(resolve => {
-  //   //     that.socket.emit('get userdata from db', that.gamename);
-  //   //     that.socket.on('retrieve userdata', function(res) {
-  //   //       console.log(res);
-  //   //       that.player.characters = [];
-  //   //       $.each(res, function(i, v) {
-  //   //         that.player.characters.push({name: v.character_name, id: v.slot_id, sprite: v.sprite_id, x:v.pos_x, y:v.pos_y});
-  //   //       });
-  //   //       resolve();
-  //   //     });
-  //   //   });
-  //   // })
-  //   .then(function(){
-  //     console.log("Loading game..");
-  //     // game.gamename = prompt();
-  //     game.gamename = "ADRN";
-  //     game.characterName = prompt();
-  //     return Promise.resolve();
-  //   })
-  //   .then(this.loadPlayerData)
-  //   .then(function() {
-  //     return that.loadImages(that.data.gameImages)
-  //   })
-  //   .then(this.loadMap.bind(this))
-  //   .then(function(canvas) {
-  //     // game.player.init();
-  //     game.player.screen = canvas;
-  //     game.activeCamera = game.player.camera;
-  //     game.activeScene = game.scenes.playing;
-  //   })
-  //   .then(function(){
-  //     that.turnOnChat();
-  //   })
-  //   .then(function(){
-  //     setInterval(game.update.bind(game), 1000/60);
-  //   });
-  //   // .then(this.update.bind(this));
-  //   // this.update();
-  // }
 
   this.keyboardKeys = {
     INTERACTION: {
@@ -415,10 +355,15 @@ function Game() {
     });
   }
 
-  // this.animationFrame;
+  this.animationFrame;
+  lastUpdate = Date.now();
+  this.deltaTime;
 
   this.update = function() {
-    // this.animationFrame = requestAnimationFrame(this.update.bind(this));
+    this.animationFrame = requestAnimationFrame(this.update.bind(this));
+    let now = Date.now();
+    this.deltaTime = (now - lastUpdate) / 1000;
+    lastUpdate = now;
     this.fpsCounter();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this.activeScene == this.scenes.playing) {

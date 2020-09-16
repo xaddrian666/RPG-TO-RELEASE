@@ -27,6 +27,7 @@ con.connect(function(err) {
   console.log("Connected to mysql!");
   con.query("SELECT * FROM users", function (err, result) {
   if (err) throw err;
+    // console.log(result);
   });
 });
 
@@ -39,10 +40,10 @@ var locations = {
     name: "Dungeon",
     src: "maps/dungeon.json"
   },
-  // test: {
-  //   name: "Test",
-  //   src: "maps/test.json"
-  // }
+  test: {
+    name: "Test",
+    src: "maps/test.json"
+  }
 }
 
 getTextures = (arr, img) => {
@@ -91,7 +92,6 @@ loadTilesets = () => {
       }
       locations[name].tilesets = tst;
     }
-    console.log(locations.woodlands.tilesets);
     resolve();
   });
 }
@@ -112,106 +112,77 @@ var ENTITIES_TO_SPAWN = [];
 
 generateTilesForLocation = () => {
   return new Promise(resolve => {
-    for (var name in locations) {
-      let location = locations[name];
-      console.log(`Generating tiles for ${location.name}`);
+    for(var name in locations) {
+      console.log(`Generating tiles for ${locations[name].name}`);
       let posx = 0,
           posy = 0,
           iteration = 0,
           tiles = [],
           interactions = [],
           areas = [];
-      for (var layer in location.data.layers) {
-        if (location.data.layers[layer].type == "tilelayer") {
+      for(var layer in locations[name].data.layers) {
+        if(locations[name].data.layers[layer].type == "tilelayer") {
           posx = 0;
           posy = 0;
           iteration = 0;
-          xVal = 0;
-          yVal = 0;
-          for (var id in locations[name].data.layers[layer].data) {
-            if (locations[name].data.layers[layer].data[id] == 0) {
+          for(var id in locations[name].data.layers[layer].data) {
+            if(locations[name].data.layers[layer].data[id] == 0) {
               iteration++;
-              posx += tilesize * 2;
-              xVal += 1;
-              if (iteration % locations[name].data.layers[layer].width == 0) {
+              posx += tilesize*2;
+              if(iteration % locations[name].data.layers[layer].width == 0) {
                 posx = 0;
-                posy += tilesize * 2;
-                xVal = 0;
-                yVal += 1;
+                posy += tilesize*2;
               }
               continue;
             }
-            let txt = locations[name].textures[locations[name].data.layers[layer].data[id] - 1],
-              tileset = locations[name].tilesets[txt.tileset];
+            let txt = locations[name].textures[locations[name].data.layers[layer].data[id]-1],
+                tileset = locations[name].tilesets[txt.tileset];
 
-            tile = { id: iteration, tile_id: locations[name].data.layers[layer].data[id], block: txt.block, x: posx, y: posy, tileset: tileset.name, layer: locations[name].data.layers[layer].name };
-            for (let prop in locations[name].data.layers[layer].properties) {
+            tile = {id: iteration, tile_id: locations[name].data.layers[layer].data[id], block: txt.block, x: posx, y: posy, tileset: tileset.name, layer:locations[name].data.layers[layer].name};
+            for(let prop in locations[name].data.layers[layer].properties) {
               tile[locations[name].data.layers[layer].properties[prop].name] = locations[name].data.layers[layer].properties[prop].value;
             }
-
-            if (!tiles[xVal]) {
-              tiles.push(new Array());
-            }
-            if(yVal == 15) {
-              console.log(tiles[xVal]);
-            }
-            
-            if (!tiles[xVal][yVal]) {
-              tiles[xVal].push(new Array());
-            }
-
-            // console.log(tiles);
-            if (!tiles[xVal]) {
-              console.log(tiles);
-            }
-            tiles[xVal][yVal].push(tile);
-            
-            // if() {
+            //
+            // if(!tiles[id]) {
             //   tiles.push(new Array());
             // }
 
-            // let theArr = tiles.filter(function (key) { return key.x == posx && key.y == posy; })[0];
-
-            // theArr.tiles.push(tile);
+            tiles.push(tile);
 
             iteration++;
-            posx += tilesize * 2;
-            xVal += 1;
-            if (iteration % locations[name].data.layers[layer].width == 0) {
+            posx += tilesize*2;
+            if(iteration % locations[name].data.layers[layer].width == 0) {
               posx = 0;
-              posy += tilesize * 2;
-              xVal = 0;
-              yVal += 1;
+              posy += tilesize*2;
             }
           }
-        }
-        else if (locations[name].data.layers[layer].type == "objectgroup") {
-          if (locations[name].data.layers[layer].properties) {
-            for (var index in locations[name].data.layers[layer].properties) {
-              if (locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "areas") {
-                for (let id in locations[name].data.layers[layer].objects) {
+        } else if(locations[name].data.layers[layer].type == "objectgroup") {
+          if(locations[name].data.layers[layer].properties) {
+            for(var index in locations[name].data.layers[layer].properties) {
+              if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "areas") {
+                for(let id in locations[name].data.layers[layer].objects) {
                   areas.push(locations[name].data.layers[layer].objects[id]);
                 }
-              } else if (locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "entities") {
-                for (var object_id in locations[name].data.layers[layer].objects) {
-                  let obj = {};
-                  for (var prop_id in locations[name].data.layers[layer].objects[object_id].properties) {
-                    // console.log(locations[name].data.layers[layer].objects[object_id].properties[prop_id])
-                    let prop = locations[name].data.layers[layer].objects[object_id].properties[prop_id];
-                    obj[prop.name] = prop.value;
+              } else if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "entities") {
+                  for(var object_id in locations[name].data.layers[layer].objects) {
+                    let obj = {};
+                    for(var prop_id in locations[name].data.layers[layer].objects[object_id].properties) {
+                      // console.log(locations[name].data.layers[layer].objects[object_id].properties[prop_id])
+                      let prop = locations[name].data.layers[layer].objects[object_id].properties[prop_id];
+                      obj[prop.name] = prop.value;
+                    }
+                    if(typeof obj.area === 'undefined') {
+                      obj.x = locations[name].data.layers[layer].objects[object_id].x * 2;
+                      obj.y = locations[name].data.layers[layer].objects[object_id].y * 2;
+                    }
+                    obj.location = locations[name].name;
+                    ENTITIES_TO_SPAWN.push(obj);
                   }
-                  if (typeof obj.area === 'undefined') {
-                    obj.x = locations[name].data.layers[layer].objects[object_id].x * 2;
-                    obj.y = locations[name].data.layers[layer].objects[object_id].y * 2;
+                } else if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "interactions") {
+                  for(let id in locations[name].data.layers[layer].objects) {
+                    interactions.push(locations[name].data.layers[layer].objects[id]);
                   }
-                  obj.location = locations[name].name;
-                  ENTITIES_TO_SPAWN.push(obj);
                 }
-              } else if (locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "interactions") {
-                for (let id in locations[name].data.layers[layer].objects) {
-                  interactions.push(locations[name].data.layers[layer].objects[id]);
-                }
-              }
             }
           }
         }
@@ -223,89 +194,6 @@ generateTilesForLocation = () => {
     }
     resolve();
   });
-  // return new Promise(resolve => {
-  //   for(var name in locations) {
-  //     console.log(`Generating tiles for ${locations[name].name}`);
-  //     let posx = 0,
-  //         posy = 0,
-  //         iteration = 0,
-  //         tiles = [],
-  //         interactions = [],
-  //         areas = [];
-  //     for(var layer in locations[name].data.layers) {
-  //       if(locations[name].data.layers[layer].type == "tilelayer") {
-  //         posx = 0;
-  //         posy = 0;
-  //         iteration = 0;
-  //         for(var id in locations[name].data.layers[layer].data) {
-  //           if(locations[name].data.layers[layer].data[id] == 0) {
-  //             iteration++;
-  //             posx += tilesize*2;
-  //             if(iteration % locations[name].data.layers[layer].width == 0) {
-  //               posx = 0;
-  //               posy += tilesize*2;
-  //             }
-  //             continue;
-  //           }
-  //           let txt = locations[name].textures[locations[name].data.layers[layer].data[id]-1],
-  //               tileset = locations[name].tilesets[txt.tileset];
-
-  //           tile = {id: iteration, tile_id: locations[name].data.layers[layer].data[id], block: txt.block, x: posx, y: posy, tileset: tileset.name, layer:locations[name].data.layers[layer].name};
-  //           for(let prop in locations[name].data.layers[layer].properties) {
-  //             tile[locations[name].data.layers[layer].properties[prop].name] = locations[name].data.layers[layer].properties[prop].value;
-  //           }
-  //           //
-  //           // if(!tiles[id]) {
-  //           //   tiles.push(new Array());
-  //           // }
-
-  //           tiles.push(tile);
-
-  //           iteration++;
-  //           posx += tilesize*2;
-  //           if(iteration % locations[name].data.layers[layer].width == 0) {
-  //             posx = 0;
-  //             posy += tilesize*2;
-  //           }
-  //         }
-  //       } else if(locations[name].data.layers[layer].type == "objectgroup") {
-  //         if(locations[name].data.layers[layer].properties) {
-  //           for(var index in locations[name].data.layers[layer].properties) {
-  //             if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "areas") {
-  //               for(let id in locations[name].data.layers[layer].objects) {
-  //                 areas.push(locations[name].data.layers[layer].objects[id]);
-  //               }
-  //             } else if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "entities") {
-  //                 for(var object_id in locations[name].data.layers[layer].objects) {
-  //                   let obj = {};
-  //                   for(var prop_id in locations[name].data.layers[layer].objects[object_id].properties) {
-  //                     // console.log(locations[name].data.layers[layer].objects[object_id].properties[prop_id])
-  //                     let prop = locations[name].data.layers[layer].objects[object_id].properties[prop_id];
-  //                     obj[prop.name] = prop.value;
-  //                   }
-  //                   if(typeof obj.area === 'undefined') {
-  //                     obj.x = locations[name].data.layers[layer].objects[object_id].x * 2;
-  //                     obj.y = locations[name].data.layers[layer].objects[object_id].y * 2;
-  //                   }
-  //                   obj.location = locations[name].name;
-  //                   ENTITIES_TO_SPAWN.push(obj);
-  //                 }
-  //               } else if(locations[name].data.layers[layer].properties[index].name == "type" && locations[name].data.layers[layer].properties[index].value == "interactions") {
-  //                 for(let id in locations[name].data.layers[layer].objects) {
-  //                   interactions.push(locations[name].data.layers[layer].objects[id]);
-  //                 }
-  //               }
-  //           }
-  //         }
-  //       }
-  //     }
-  //     locations[name].entities = [];
-  //     locations[name].interactions = interactions;
-  //     locations[name].areas = areas;
-  //     locations[name].tiles = tiles;
-  //   }
-  //   resolve();
-  // });
 }
 
 var entities = [];

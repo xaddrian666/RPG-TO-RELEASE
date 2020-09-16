@@ -1,7 +1,7 @@
 Game.prototype.Entity = function(config) {
   this.id = game.location.entities.length;
   this.type = game.data.entities[config.type];
-  this.speed = 2;
+  this.speed = 40;
   this.state = undefined;
   this.size = {
     width: this.type.width,
@@ -56,8 +56,8 @@ Game.prototype.Entity = function(config) {
       dx /= vel;
       dy /= vel;
     }
-    this.position.x += dx;
-    this.position.y += dy;
+    this.position.x += dx * this.speed * game.deltaTime;
+    this.position.y += dy * this.speed * game.deltaTime;
 
     if(frame % 15 == 0) {
       if(this.step == 0) {
